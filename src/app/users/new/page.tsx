@@ -12,7 +12,6 @@ import { ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { IUser, UserRole, WorkMode } from '@/core/interfaces/models';
 import { UserService } from '@/services/api/userService';
-import { useAuth } from '@/contexts/BackendAuthContext';
 import Link from 'next/link';
 import {
   Select,
@@ -34,7 +33,6 @@ export default function NewUserPage() {
 
 function NewUserContent() {
   const router = useRouter();
-  const { userRole } = useAuth();
   
   // Form state
   const [fullName, setFullName] = useState('');
@@ -112,27 +110,31 @@ function NewUserContent() {
             password,
             sendPasswordEmail
           );
-          
+        
           toast({
             title: "Usuario creado",
             description: "El usuario ha sido creado correctamente en el backend y en Firebase.",
             variant: "default",
           });
-        } catch (firebaseError: any) {
-          // Check if error is because user already exists
-          if (firebaseError.code === 'auth/email-already-in-use') {
-            toast({
-              title: "Usuario parcialmente creado",
-              description: "El usuario ya existe en Firebase pero se ha creado en el backend.",
-              variant: "default",
-            });
+        } catch (firebaseError: unknown) { // Use `unknown` instead of `any`
+          if (firebaseError instanceof Error && 'code' in firebaseError) {
+            // Check if error is because user already exists
+            if ((firebaseError as { code: string }).code === 'auth/email-already-in-use') {
+              toast({
+                title: "Usuario parcialmente creado",
+                description: "El usuario ya existe en Firebase pero se ha creado en el backend.",
+                variant: "default",
+              });
+            } else {
+              console.error('Error creating Firebase user:', firebaseError);
+              toast({
+                title: "Usuario parcialmente creado",
+                description: "El usuario se creó en el backend pero hubo un error al crearlo en Firebase.",
+                variant: "destructive",
+              });
+            }
           } else {
-            console.error('Error creating Firebase user:', firebaseError);
-            toast({
-              title: "Usuario parcialmente creado",
-              description: "El usuario se creó en el backend pero hubo un error al crearlo en Firebase.",
-              variant: "destructive",
-            });
+            console.error('Unexpected error:', firebaseError);
           }
         }
       } else {

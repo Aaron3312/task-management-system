@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UserRole } from '@/core/interfaces/models';
 import Link from 'next/link';
-import { Layers, Calendar, CheckSquare, Users, LogOut, User, Menu, Plus } from "lucide-react";
+import { Layers, Calendar, CheckSquare, LogOut, User, Menu, Plus } from "lucide-react";
 
 interface AppHeaderProps {
   username?: string;

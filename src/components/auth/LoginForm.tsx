@@ -27,11 +27,12 @@ const LoginForm: React.FC = () => {
 
     try {
       await login(username, password);
-      router.push('/'); // Redirige al dashboard después del login
-    } catch (error: any) {
+      router.push('/'); // Redirect to the dashboard after login
+    } catch (error: unknown) { // Use `unknown` instead of `any`
+      if (error instanceof Error) {
+        console.error('Login error:', error.message);
+      }
       setLoginError('Credenciales inválidas o error de conexión');
-    } finally {
-      setIsLoading(false);
     }
   };
 

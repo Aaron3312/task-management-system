@@ -12,7 +12,6 @@ import { ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { IUser, UserRole, WorkMode } from '@/core/interfaces/models';
 import { UserService } from '@/services/api/userService';
-import { useAuth } from '@/contexts/BackendAuthContext';
 import Link from 'next/link';
 import {
   Select,
@@ -35,36 +34,33 @@ function UserEditContent() {
   const params = useParams();
   const userId = Number(params.id);
   const router = useRouter();
-  const { userRole } = useAuth();
-  
+
   // Form state
-  const [userData, setUserData] = useState<IUser | null>(null);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.DEVELOPER);
   const [workMode, setWorkMode] = useState<WorkMode>(WorkMode.REMOTE);
   const [active, setActive] = useState(true);
-  
+
   // UI state
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  
+
   // Load user data
   useEffect(() => {
     const fetchUserData = async () => {
       setIsLoading(true);
       setIsCreating(false);
       setError(null);
-      
+
       try {
         const user = await UserService.getUserById(userId);
-        
+
         if (user) {
-          setUserData(user);
           setFullName(user.full_name || '');
           setEmail(user.email || '');
           setUsername(user.username || '');
@@ -75,7 +71,7 @@ function UserEditContent() {
           // User not found, but we'll prepare for create mode
           setIsCreating(true);
           setError('Usuario no encontrado. Puedes crear uno nuevo.');
-          
+
           // Default values for new user
           setFullName('');
           setEmail('');
@@ -92,19 +88,19 @@ function UserEditContent() {
         setIsLoading(false);
       }
     };
-    
+
     if (userId) {
       fetchUserData();
     }
   }, [userId, router]);
-  
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setError(null);
     setSuccess(null);
-    
+
     try {
       const userData: Partial<IUser> = {
         full_name: fullName,
@@ -113,22 +109,22 @@ function UserEditContent() {
         role,
         work_mode: workMode,
         active,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
-      
+
       let result: IUser | null;
-      
+
       if (isCreating) {
         // Create new user
         result = await UserService.createUser(userData as Omit<IUser, 'id' | 'created_at' | 'updated_at'>);
-        
+
         if (result) {
           toast({
             title: "Usuario creado",
             description: "El usuario ha sido creado correctamente.",
             variant: "default",
           });
-          
+
           setSuccess('Usuario creado correctamente');
           setTimeout(() => {
             router.push(`/users/${result?.id || ''}`);
@@ -137,14 +133,14 @@ function UserEditContent() {
       } else {
         // Update existing user
         result = await UserService.updateUser(userId, userData);
-        
+
         if (result) {
           toast({
             title: "Usuario actualizado",
             description: "El usuario ha sido actualizado correctamente.",
             variant: "default",
           });
-          
+
           setSuccess('Usuario actualizado correctamente');
           setTimeout(() => {
             router.push(`/users/${userId}`);
@@ -154,7 +150,7 @@ function UserEditContent() {
     } catch (error) {
       console.error('Error saving user:', error);
       setError('Error al guardar los datos del usuario');
-      
+
       toast({
         title: "Error",
         description: "Ocurrió un error al guardar los datos del usuario.",
@@ -164,7 +160,7 @@ function UserEditContent() {
       setIsSaving(false);
     }
   };
-  
+
   if (isLoading) {
     return (
       <MainLayout>

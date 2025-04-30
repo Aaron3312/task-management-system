@@ -66,4 +66,9 @@ export async function refreshAuthToken(): Promise<boolean> {
   }
 }
 
-export default { setupFirebaseAuthMiddleware, refreshAuthToken };
+const firebaseAuthMiddleware = {
+  setupFirebaseAuthMiddleware,
+  refreshAuthToken,
+};
+
+export default firebaseAuthMiddleware;

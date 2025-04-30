@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ITask, TaskStatus } from '@/core/interfaces/models';
-import { CalendarIcon, Clock, CheckCircle2, AlertCircle, BarChart2 } from "lucide-react";
+import { CalendarIcon, Clock, CheckCircle2, BarChart2 } from "lucide-react";
 import { useRouter } from 'next/navigation';
 
 interface TaskCardProps {

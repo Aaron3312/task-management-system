@@ -1,31 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { IProject, ProjectStatus, UserRole } from '@/core/interfaces/models';
 import ProjectList from '@/components/projects/ProjectList';
 import Link from 'next/link';
 import { PlusCircle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { ProjectService, TaskService, ProjectMemberService } from '@/services/api';
 
-// Importamos los servicios reales de API
-import { 
-  ProjectService,
-  TaskService,
-  ProjectMemberService
-} from '@/services/api';
-
-// Tipo para proyectos con metadatos
 type ProjectWithMetadata = IProject & {
   taskCount: number;
   memberCount: number;
@@ -39,38 +26,31 @@ export default function ProjectsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // El usuario por defecto para esta demo
   const demoUser = {
     username: 'djeison',
-    userRole: UserRole.MANAGER
+    userRole: UserRole.MANAGER,
   };
 
   useEffect(() => {
     const fetchProjects = async () => {
       setIsLoading(true);
       try {
-        // Obtener todos los proyectos
         const allProjects = await ProjectService.getProjects();
-        
-        // Para cada proyecto, cargar los datos adicionales
         const projectsWithData = await Promise.all(
           allProjects.map(async (project) => {
             let taskCount = 0;
             let memberCount = 0;
-            
+
             try {
-              // Si el proyecto tiene sprints con tareas, contar esas tareas
               if (project.sprints && project.sprints.length > 0) {
                 taskCount = project.sprints.reduce((count, sprint) => {
                   return count + (sprint.tasks ? sprint.tasks.length : 0);
                 }, 0);
               } else {
-                // Intentar obtener tareas por proyecto_id
                 const tasks = await TaskService.getTasks({ project_id: project.id });
                 taskCount = tasks.length;
               }
-              
-              // Obtener miembros del proyecto
+
               if (project.id) {
                 const members = await ProjectMemberService.getProjectMembersByProject(project.id);
                 memberCount = members.length;
@@ -78,15 +58,15 @@ export default function ProjectsPage() {
             } catch (error) {
               console.error(`Error fetching details for project ${project.id}:`, error);
             }
-            
+
             return {
               ...project,
               taskCount,
-              memberCount
+              memberCount,
             };
           })
         );
-        
+
         setProjects(projectsWithData);
         setFilteredProjects(projectsWithData);
       } catch (error) {
@@ -99,36 +79,40 @@ export default function ProjectsPage() {
     fetchProjects();
   }, []);
 
-  // Efecto para filtrar proyectos cuando cambia el filtro o la búsqueda
   useEffect(() => {
     let filtered = [...projects];
-    
-    // Aplicar filtro de estado
+
     if (statusFilter !== "all") {
       filtered = filtered.filter(
-        project => project.status === parseInt(statusFilter)
+        (project) => project.status === parseInt(statusFilter)
       );
     }
-    
-    // Aplicar filtro de búsqueda
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        project => 
+        (project) =>
           project.name.toLowerCase().includes(query) ||
           (project.description && project.description.toLowerCase().includes(query))
       );
     }
-    
+
     setFilteredProjects(filtered);
   }, [statusFilter, searchQuery, projects]);
 
-  // Función para manejar la navegación al detalle del proyecto
   const handleProjectClick = (id: number | undefined) => {
     if (id !== undefined) {
       router.push(`/projects/${id}`);
     }
   };
+
+  const calculateProgressIndex = useCallback(() => {
+    // Function logic here...
+  }, []);
+
+  useEffect(() => {
+    calculateProgressIndex();
+  }, [calculateProgressIndex]);
 
   return (
     <ProtectedRoute requiredRoles={[UserRole.DEVELOPER, UserRole.MANAGER, UserRole.TESTER]}>
@@ -145,7 +129,6 @@ export default function ProjectsPage() {
             </div>
           </div>
 
-          {/* Filtros */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
@@ -170,14 +153,13 @@ export default function ProjectsPage() {
             </Select>
           </div>
 
-          {/* Lista de proyectos */}
-          <ProjectList 
+          <ProjectList
             projects={filteredProjects}
             onProjectClick={handleProjectClick}
             isLoading={isLoading}
             emptyMessage={
-              searchQuery || statusFilter !== "all" 
-                ? "No hay proyectos que coincidan con los filtros" 
+              searchQuery || statusFilter !== "all"
+                ? "No hay proyectos que coincidan con los filtros"
                 : "No hay proyectos disponibles"
             }
           />

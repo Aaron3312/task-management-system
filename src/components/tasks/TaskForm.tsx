@@ -51,8 +51,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
   // Inicializar formulario con datos de tarea si existe
   useEffect(() => {
     if (task) {
-      const { id, created_at, updated_at, ...taskData } = task;
-      setFormData(taskData);
+      const { title, description, due_date, priority, status, estimated_hours, project_id, sprint_id } = task; // Only destructure the needed properties
+      setFormData({ title, description, due_date, priority, status, estimated_hours, project_id, sprint_id });
     }
   }, [task]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '@/services/api/apiClient';
 import { toast } from './use-toast';
 import { Alert, AlertDescription } from './alert';
@@ -21,18 +21,18 @@ export function ServerHealthCheck({
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
 
   // Function to check server health
-  const checkServerHealth = async () => {
+  const checkServerHealth = useCallback(async () => {
     if (isChecking) return;
-    
+
     setIsChecking(true);
-    
+
     try {
       const isAvailable = await apiClient.healthCheck();
-      
+
       // Update state
       setIsServerAvailable(isAvailable);
       setLastChecked(new Date());
-      
+
       // If status changed, show toast
       if (isAvailable && isServerAvailable === false) {
         toast({
@@ -57,7 +57,7 @@ export function ServerHealthCheck({
     } catch (error) {
       console.error("Error checking server health:", error);
       setIsServerAvailable(false);
-      
+
       if (isServerAvailable === true) {
         // Only show toast if status changed from available to unavailable
         toast({
@@ -69,7 +69,7 @@ export function ServerHealthCheck({
     } finally {
       setIsChecking(false);
     }
-  };
+  }, [isChecking, isServerAvailable, showSuccessToast]);
 
   // Check server health on component mount and at regular intervals
   useEffect(() => {
@@ -81,7 +81,7 @@ export function ServerHealthCheck({
     
     // Clean up interval on unmount
     return () => clearInterval(intervalId);
-  }, [interval, isServerAvailable]);
+  }, [interval, checkServerHealth]);
 
   // If still waiting for initial check
   if (isServerAvailable === null) {

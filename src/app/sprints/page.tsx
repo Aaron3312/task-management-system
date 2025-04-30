@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 // Importamos los servicios reales de API
-import { SprintService, ProjectService, TaskService } from '@/services/api';
+import { SprintService, ProjectService } from '@/services/api';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 // Tipo extendido para los sprints con metadatos

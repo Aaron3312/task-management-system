@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { 
   IProject, 
   IProjectMember, 
-  ISprint,
   ProjectStatus, 
   UserRole,
   SprintStatus 
@@ -225,19 +224,6 @@ const ProjectDetailsPage = () => {
       console.error("Error al eliminar el proyecto:", err);
       setError("Error al eliminar el proyecto. Por favor, inténtelo de nuevo.");
       setIsDeleting(false);
-    }
-  };
-
-  // Obtener nombres de usuario para los miembros
-  const getUserName = async (userId: number) => {
-    try {
-      // Implementa la lógica para obtener el nombre del usuario
-      // Esta es una función simple que podrías implementar en tu UserService
-      // Puedes reemplazarla con tu implementación real
-      return `Usuario ${userId}`;
-    } catch (error) {
-      console.error(`Error fetching user ${userId}:`, error);
-      return `ID: ${userId}`;
     }
   };
 

@@ -49,8 +49,8 @@ const SprintForm: React.FC<SprintFormProps> = ({
   // Inicializar formulario con datos de sprint si existe
   useEffect(() => {
     if (sprint) {
-      const { id, created_at, updated_at, ...sprintData } = sprint;
-      setFormData(sprintData);
+      const { name, description, start_date, end_date, status, project_id } = sprint;
+      setFormData({ name, description, start_date, end_date, status, project_id });
     } else if (projectId) {
       setFormData(prev => ({ ...prev, project_id: projectId }));
     }

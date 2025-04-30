@@ -14,7 +14,7 @@ import {
 import { ITask, TaskStatus, UserRole } from '@/core/interfaces/models';
 import TaskList from '@/components/tasks/TaskList';
 import Link from 'next/link';
-import { PlusCircle, Search } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useRouter } from 'next/navigation';
 
@@ -29,7 +29,6 @@ export default function TasksPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [loadingTaskId, setLoadingTaskId] = useState<number | null>(null);
   const router = useRouter();
 
   // El usuario por defecto para esta demo
@@ -105,9 +104,7 @@ export default function TasksPage() {
   const handleTaskStatusChange = async (taskId: number | undefined, status: TaskStatus) => {
     if (!taskId) return;
     
-    try {
-      setLoadingTaskId(taskId);
-      
+    try {      
       const currentTask = await TaskService.getTaskById(taskId);
       
       if (!currentTask) {
@@ -168,8 +165,6 @@ export default function TasksPage() {
       }
     } catch (error) {
       console.error(`Error updating task ${taskId}:`, error);
-    } finally {
-      setLoadingTaskId(null);
     }
   };
 

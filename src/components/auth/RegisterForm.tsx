@@ -28,8 +28,12 @@ const RegisterForm: React.FC = () => {
     try {
       await login(email, password);
       router.push('/'); // Redirect to dashboard on success
-    } catch (error: any) {
-      setLoginError(getFirebaseErrorMessage(error.code) || 'Failed to log in');
+    } catch (error: unknown) { // Use `unknown` instead of `any`
+      if (error instanceof Error && 'code' in error) {
+        setLoginError(getFirebaseErrorMessage((error as { code: string }).code) || 'Failed to log in');
+      } else {
+        setLoginError('An unexpected error occurred');
+      }
     } finally {
       setIsLoading(false);
     }

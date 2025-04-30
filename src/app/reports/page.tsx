@@ -15,8 +15,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   IProject, 
-  ITask, 
-  ISprint, 
   TaskStatus, 
   ProjectStatus, 
   SprintStatus, 
@@ -24,9 +22,7 @@ import {
 } from '@/core/interfaces/models';
 import { 
   BarChart, 
-  PieChart, 
-  Calendar, 
-  Clock, 
+  Calendar,
   AlertTriangle, 
   CheckCircle, 
   Timer, 
@@ -40,7 +36,6 @@ import {
   ProjectService, 
   TaskService, 
   SprintService, 
-  UserService 
 } from '@/services/api';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -80,7 +75,7 @@ export default function ReportsPage() {
         setProjects(projectsData);
         
         // Inicializar estadísticas
-        let stats = {
+        const stats = {
           totalProjects: projectsData.length,
           activeProjects: projectsData.filter(p => p.status === ProjectStatus.ACTIVE).length,
           completedProjects: projectsData.filter(p => p.status === ProjectStatus.COMPLETED).length,
@@ -152,71 +147,53 @@ export default function ReportsPage() {
   useEffect(() => {
     const fetchProjectSpecificData = async () => {
       if (selectedProject === "all") {
-        return; // Ya tenemos las estadísticas globales
+        return;
       }
-      
+  
       setIsLoading(true);
       try {
         const projectId = parseInt(selectedProject);
-        
-        // Obtener tareas del proyecto seleccionado
+  
         const tasksData = await TaskService.getTasks({ project_id: projectId });
-        
-        // Obtener sprints del proyecto seleccionado
         const sprintsData = await SprintService.getSprints({ project_id: projectId });
-        
-        // Inicializar estadísticas específicas del proyecto
-        let stats = {
-          ...statistics,
+  
+        const newStats = {
           totalTasks: tasksData.length,
           completedTasks: tasksData.filter(t => t.status === TaskStatus.COMPLETED).length,
           pendingTasks: tasksData.filter(t => t.status === TaskStatus.TODO || t.status === TaskStatus.IN_PROGRESS).length,
           blockedTasks: tasksData.filter(t => t.status === TaskStatus.BLOCKED).length,
           totalSprints: sprintsData.length,
           activeSprints: sprintsData.filter(s => s.status === SprintStatus.ACTIVE).length,
+          overdueTasks: tasksData.filter(t => {
+            if (!t.due_date) return false;
+            const dueDate = new Date(t.due_date);
+            return dueDate < new Date() && t.status !== TaskStatus.COMPLETED;
+          }).length,
+          nearEndSprints: sprintsData.filter(s => {
+            const endDate = new Date(s.end_date);
+            const today = new Date();
+            const threeDaysFromNow = new Date();
+            threeDaysFromNow.setDate(today.getDate() + 3);
+            return endDate <= threeDaysFromNow && endDate >= today && s.status === SprintStatus.ACTIVE;
+          }).length,
+          projectProgress: tasksData.length > 0
+            ? Math.round((tasksData.filter(t => t.status === TaskStatus.COMPLETED).length / tasksData.length) * 100)
+            : 0,
+          averageTasksPerSprint: sprintsData.length > 0
+            ? Math.round(tasksData.length / sprintsData.length)
+            : 0,
         };
-        
-        // Contar tareas vencidas
-        const today = new Date();
-        stats.overdueTasks = tasksData.filter(t => {
-          if (!t.due_date) return false;
-          const dueDate = new Date(t.due_date);
-          return dueDate < today && t.status !== TaskStatus.COMPLETED;
-        }).length;
-        
-        // Contar sprints que terminan pronto (en menos de 3 días)
-        const threeDaysFromNow = new Date();
-        threeDaysFromNow.setDate(today.getDate() + 3);
-        
-        stats.nearEndSprints = sprintsData.filter(s => {
-          const endDate = new Date(s.end_date);
-          return endDate <= threeDaysFromNow && endDate >= today && s.status === SprintStatus.ACTIVE;
-        }).length;
-        
-        // Calcular progreso del proyecto
-        if (stats.totalTasks > 0) {
-          stats.projectProgress = Math.round((stats.completedTasks / stats.totalTasks) * 100);
-        } else {
-          stats.projectProgress = 0;
-        }
-        
-        // Calcular promedio de tareas por sprint
-        if (stats.totalSprints > 0) {
-          stats.averageTasksPerSprint = Math.round(stats.totalTasks / stats.totalSprints);
-        } else {
-          stats.averageTasksPerSprint = 0;
-        }
-        
-        setStatistics(stats);
+  
+        setStatistics(newStats);
       } catch (error) {
         console.error('Error fetching project specific data:', error);
       } finally {
         setIsLoading(false);
       }
     };
-
+  
     fetchProjectSpecificData();
-  }, [selectedProject]);
+  }, [selectedProject]); // No need to include `statistics`
 
   return (
     <ProtectedRoute requiredRoles={[UserRole.DEVELOPER, UserRole.MANAGER]}>

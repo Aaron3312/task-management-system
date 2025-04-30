@@ -1,7 +1,7 @@
 // src/app/reports/projects/page.tsx
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   IProject, 
@@ -20,13 +20,11 @@ import {
   ISprint,
   ProjectStatus, 
   TaskStatus,
-  SprintStatus,
   UserRole 
 } from '@/core/interfaces/models';
 import { 
   ChevronLeft, 
   Download, 
-  Calendar,
   Clock,
   CheckCircle,
   XCircle,
@@ -34,7 +32,6 @@ import {
   Users,
   BarChart,
   Layers,
-  Zap,
   Search
 } from "lucide-react";
 import Link from 'next/link';
@@ -119,34 +116,28 @@ const getDaysRemaining = (endDate: string) => {
   };
 
   // Función para calcular el índice de progreso (progreso vs tiempo transcurrido)
-  const calculateProgressIndex = (
-    startDate: string, 
-    endDate: string, 
-    completionRate: number
-  ) => {
-    const today = new Date();
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    // Si el proyecto está terminado o la fecha de fin ya pasó
-    if (today > end) {
-      return completionRate;
-    }
-    
-    // Calcular el porcentaje de tiempo transcurrido
-    const totalDays = getDaysTotal(startDate, endDate);
-    const daysElapsed = getDaysTotal(startDate, today.toISOString());
-    const timeElapsedPercent = Math.min(100, Math.round((daysElapsed / totalDays) * 100));
-    
-    // Comparar el progreso con el tiempo transcurrido
-    // Si completionRate >= timeElapsedPercent, el proyecto va bien
-    // Si completionRate < timeElapsedPercent, el proyecto va retrasado
-    
-    // Normalizar a 0-100, donde 100 significa que va al día o adelantado
-    const progressIndex = Math.min(100, Math.round((completionRate / timeElapsedPercent) * 100));
-    
-    return progressIndex;
-  };
+  const calculateProgressIndex = useCallback(
+    (startDate: string, endDate: string, completionRate: number) => {
+      const today = new Date();
+      const end = new Date(endDate);
+  
+      // If the project is completed or the end date has passed
+      if (today > end) {
+        return completionRate;
+      }
+  
+      // Calculate the percentage of elapsed time
+      const totalDays = getDaysTotal(startDate, endDate);
+      const daysElapsed = getDaysTotal(startDate, today.toISOString());
+      const timeElapsedPercent = Math.min(100, Math.round((daysElapsed / totalDays) * 100));
+  
+      // Compare progress with elapsed time
+      const progressIndex = Math.min(100, Math.round((completionRate / timeElapsedPercent) * 100));
+  
+      return progressIndex;
+    },
+    [] // Empty dependency array ensures the function is memoized
+  );
 
   // Función para determinar el nivel de riesgo
   const determineRiskLevel = (
@@ -291,7 +282,7 @@ const getDaysRemaining = (endDate: string) => {
     };
 
     fetchData();
-  }, []);
+  }, [calculateProgressIndex]);
 
   // Filtrar proyectos cuando cambian los filtros
   useEffect(() => {

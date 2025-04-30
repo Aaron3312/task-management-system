@@ -32,8 +32,6 @@ export class TaskFactory {
     // Si la tarea supera el umbral de horas y no tiene subtareas, la dividimos
     if (taskData.estimated_hours > TaskFactory.HOURS_THRESHOLD && (!taskData.subtasks || taskData.subtasks.length === 0)) {
       const numSubtasks = Math.ceil(taskData.estimated_hours / TaskFactory.HOURS_THRESHOLD);
-      const hoursPerSubtask = Math.ceil(taskData.estimated_hours / numSubtasks);
-      
       const subtasks: ISubtask[] = [];
       
       for (let i = 0; i < numSubtasks; i++) {
