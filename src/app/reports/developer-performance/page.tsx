@@ -8,12 +8,15 @@ import { UserRole, ITask, ISprint } from '@/core/interfaces/models';
 import { TaskService, SprintService, UserService, TaskAssigneeService } from '@/services/api';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useDarkMode } from '@/hooks/useDarkMode';
+import { PerformancePDFExporter } from '@/utils/pdfExport';
+import { toast } from 'sonner';
 
-// Import our new components
+// Import our components
 import { PerformanceHeader } from '@/components/performance/PerformanceHeader';
 import { PerformanceFilters } from '@/components/performance/PerformanceFilters';
 import { PerformanceMetrics } from '@/components/performance/PerformanceMetrics';
 import { PerformanceCharts } from '@/components/performance/PerformanceCharts';
+import { AIAnalysis } from '@/components/performance/AIAnalysis';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 interface DeveloperPerformance {
@@ -42,6 +45,7 @@ export default function DeveloperPerformancePage() {
   const router = useRouter();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [selectedSprint, setSelectedSprint] = useState<string>('all');
   const [selectedDeveloper, setSelectedDeveloper] = useState<string>('all');
   const [performanceData, setPerformanceData] = useState<DeveloperPerformance[]>([]);
@@ -135,6 +139,7 @@ export default function DeveloperPerformancePage() {
       prepareChartData(performance, sprintsData, developersWithData);
     } catch (error) {
       console.error('Error fetching performance data:', error);
+      toast.error('Error al cargar los datos de rendimiento');
     } finally {
       setIsLoading(false);
     }
@@ -224,9 +229,52 @@ export default function DeveloperPerformancePage() {
     ? [...new Set(filteredPerformance.map(p => p.sprintId))].length
     : 1;
 
-  const handleExport = () => {
-    // TODO: Implement export functionality
-    console.log('Exporting report...');
+  // Calculate average efficiency for AI analysis
+  const averageEfficiency = filteredPerformance.length > 0
+    ? filteredPerformance.reduce((sum, p) => sum + p.efficiency, 0) / filteredPerformance.length
+    : 0;
+
+  const handleExport = async () => {
+    if (isExporting) return;
+
+    setIsExporting(true);
+    toast.loading('Generando reporte PDF con análisis IA...');
+
+    try {
+      // Validate data before export
+      if (filteredPerformance.length === 0) {
+        throw new Error('No hay datos disponibles para exportar con los filtros seleccionados');
+      }
+
+      // Prepare export data
+      const exportData = {
+        performanceData: filteredPerformance,
+        totalHoursPerSprintData,
+        hoursWorkedChartData,
+        tasksCompletedChartData,
+        developers,
+        selectedSprint,
+        selectedDeveloper,
+        totalTasksCompleted,
+        totalHoursWorked,
+        activeDevelopers,
+        activeSprints,
+        sprints // Add sprints data for real date ranges
+      };
+
+      // Create PDF exporter and generate report with AI
+      const exporter = new PerformancePDFExporter();
+      await exporter.exportPerformanceReport(exportData);
+
+      toast.dismiss();
+      toast.success('Reporte PDF con análisis IA generado exitosamente');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.dismiss();
+      toast.error(error instanceof Error ? error.message : 'Error al generar el reporte PDF');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -239,6 +287,7 @@ export default function DeveloperPerformancePage() {
             isDarkMode={isDarkMode}
             toggleDarkMode={toggleDarkMode}
             onExport={handleExport}
+            isExporting={isExporting}
           />
 
           <div className="px-6 space-y-8">
@@ -264,17 +313,29 @@ export default function DeveloperPerformancePage() {
             {isLoading ? (
               <LoadingSpinner />
             ) : (
-              <PerformanceCharts
-                totalHoursPerSprintData={totalHoursPerSprintData}
-                hoursWorkedChartData={hoursWorkedChartData}
-                tasksCompletedChartData={tasksCompletedChartData}
-                developers={developers}
-                selectedDeveloper={selectedDeveloper}
-                isDarkMode={isDarkMode}
-                developerColors={developerColors}
-                performanceData={performanceData}
-                selectedSprint={selectedSprint}
-              />
+              <>
+                <PerformanceCharts
+                  totalHoursPerSprintData={totalHoursPerSprintData}
+                  hoursWorkedChartData={hoursWorkedChartData}
+                  tasksCompletedChartData={tasksCompletedChartData}
+                  developers={developers}
+                  selectedDeveloper={selectedDeveloper}
+                  isDarkMode={isDarkMode}
+                  developerColors={developerColors}
+                  performanceData={performanceData}
+                  selectedSprint={selectedSprint}
+                />
+                
+                {/* AI Analysis Component */}
+                <AIAnalysis
+                  performanceData={filteredPerformance}
+                  sprints={sprints}
+                  developers={developers}
+                  totalHours={totalHoursWorked}
+                  totalTasks={totalTasksCompleted}
+                  averageEfficiency={averageEfficiency}
+                />
+              </>
             )}
           </div>
         </div>
