@@ -11,6 +11,7 @@ describe('Project Management CRUD Operations', () => {
       throw new Error("❌ No se encontraron las variables de entorno cifradas. Verifica el archivo cypress.env.enc y la clave de descifrado.");
     }
   });
+  
 
   /**
    * Helper function for login - to be used across tests
