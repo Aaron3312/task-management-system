@@ -100,6 +100,31 @@ const CustomTooltip = ({ active, payload, label, isDarkMode, suffix = "" }: any)
   return null;
 };
 
+// Custom tooltip for efficiency chart with normalized and original values
+const EfficiencyTooltip = ({ active, payload, label, isDarkMode }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} p-4 rounded-xl shadow-2xl border-0 backdrop-blur-sm`}>
+        <p className="font-semibold text-lg mb-2">{`${label}`}</p>
+        <div className="space-y-1">
+          <p className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: payload[0].color }}></span>
+            <span className="font-medium">Eficiencia Normalizada:</span>
+            <span className="font-bold">{`${Number(payload[0].value).toFixed(1)}%`}</span>
+          </p>
+          <p className="flex items-center gap-2 text-sm">
+            <span className="w-3 h-3 rounded-full bg-gray-400"></span>
+            <span className="font-medium">Eficiencia Real:</span>
+            <span className="font-bold">{`${Number(data.originalEfficiency).toFixed(1)}%`}</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 // Format Y-axis values
 const formatYAxisValue = (value: number) => {
   return Number(value).toFixed(value % 1 === 0 ? 0 : 1);
@@ -127,7 +152,7 @@ export const PerformanceCharts: React.FC<PerformanceChartsProps> = ({
     selectedDeveloper === 'all' || dev.id === parseInt(selectedDeveloper)
   );
 
-  // Generate efficiency data from performance data
+  // Generate efficiency data from performance data with normalization
   const generateEfficiencyData = () => {
     if (!performanceData || performanceData.length === 0) {
       return [];
@@ -156,14 +181,22 @@ export const PerformanceCharts: React.FC<PerformanceChartsProps> = ({
       }
     });
 
-    return Array.from(developerStats.values())
+    const rawData = Array.from(developerStats.values())
       .filter(stats => stats.count > 0)
       .map(stats => ({
         developer: stats.name,
-        efficiency: stats.efficiency / stats.count
+        originalEfficiency: stats.efficiency / stats.count
       }));
-  };
 
+    // Find the maximum efficiency to normalize
+    const maxEfficiency = Math.max(...rawData.map(d => d.originalEfficiency));
+    
+    // Normalize efficiency values (highest becomes 100%)
+    return rawData.map(data => ({
+      ...data,
+      efficiency: maxEfficiency > 0 ? (data.originalEfficiency / maxEfficiency) * 100 : 0
+    }));
+  };
 
   return (
     <div className="space-y-10">
@@ -272,10 +305,10 @@ export const PerformanceCharts: React.FC<PerformanceChartsProps> = ({
         </ResponsiveContainer>
       </ChartCard>
 
-      {/* Efficiency Comparison Chart */}
+      {/* Enhanced Efficiency Comparison Chart with Normalization */}
       <ChartCard
-        title="Eficiencia por Desarrollador"
-        description="Comparación de horas estimadas vs. horas reales trabajadas"
+        title="Eficiencia Relativa por Desarrollador"
+        description="Comparación normalizada - el más eficiente representa el 100%"
         icon={<TrendingUp />}
         headerGradient="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500"
       >
@@ -298,21 +331,13 @@ export const PerformanceCharts: React.FC<PerformanceChartsProps> = ({
               height={70}
             />
             <YAxis 
-              label={{ value: 'Eficiencia %', angle: -90, position: 'insideLeft', style: { fill: chartProps.axisFill, fontWeight: 600 } }} 
+              label={{ value: 'Eficiencia Relativa %', angle: -90, position: 'insideLeft', style: { fill: chartProps.axisFill, fontWeight: 600 } }} 
               stroke={chartProps.axisStroke}
               tick={{ fill: chartProps.axisFill, fontSize: 11, fontWeight: 500 }}
               tickFormatter={formatYAxisValue}
+              domain={[0, 100]}
             />
-            <Tooltip 
-              formatter={(value: number) => [`${value.toFixed(1)}%`, 'Eficiencia']}
-              contentStyle={{
-                backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-                border: 'none',
-                borderRadius: '12px',
-                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                color: isDarkMode ? '#f9fafb' : '#111827'
-              }}
-            />
+            <Tooltip content={<EfficiencyTooltip isDarkMode={isDarkMode} />} />
             <Bar 
               dataKey="efficiency" 
               fill="url(#efficiencyGradient)"
