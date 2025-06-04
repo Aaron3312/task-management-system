@@ -2,7 +2,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = new GoogleGenerativeAI("AIzaSyDdfbfnH3P-Z3JR12WN5ysRmnXMR-wY6jc");
 
 function isAuthenticated(req: NextApiRequest): boolean {
   return req.headers.authorization !== undefined;
