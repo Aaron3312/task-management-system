@@ -4,8 +4,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Brain, Lightbulb, AlertTriangle, CheckCircle, Loader2, Sparkles } from 'lucide-react';
-import { AIAnalysisService, AIInsight, AnalysisRequest } from '@/services/api/aiAnalysisService';
+import { Brain, Lightbulb, AlertTriangle, CheckCircle, Loader2, Sparkles, Users, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AIAnalysisProps {
@@ -15,6 +14,35 @@ interface AIAnalysisProps {
   totalHours: number;
   totalTasks: number;
   averageEfficiency: number;
+}
+
+interface AIInsight {
+  category: 'performance' | 'efficiency' | 'workload' | 'sprint' | 'general';
+  severity: 'low' | 'medium' | 'high';
+  title: string;
+  description: string;
+  recommendation: string;
+  data_points?: string[];
+}
+
+interface AIAnalysisResult {
+  success: boolean;
+  insights: AIInsight[];
+  summary: string;
+  error?: string;
+  metadata?: {
+    activeDevelopers: number;
+    totalDevelopers: number;
+    normalizedEfficiency: boolean;
+    analysisTimestamp: string;
+  };
+}
+
+interface AIAnalysisMetadata {
+  activeDevelopers: number;
+  totalDevelopers: number;
+  normalizedEfficiency: boolean;
+  analysisTimestamp: string;
 }
 
 const severityIcons = {
@@ -31,6 +59,41 @@ const categoryColors = {
   general: 'bg-gray-50 border-gray-200 dark:bg-gray-950 dark:border-gray-800'
 };
 
+// Service para hacer la llamada a la API
+class AIAnalysisService {
+  static async analyzePerformance(data: {
+    performanceData: any[];
+    sprints: any[];
+    developers: any[];
+    metrics: {
+      totalHours: number;
+      totalTasks: number;
+      efficiency: number;
+    };
+  }): Promise<AIAnalysisResult> {
+    try {
+      const response = await fetch('/api/ai-analysis/performance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken') || 'demo-token'}`,
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('AI Analysis Service Error:', error);
+      throw error;
+    }
+  }
+}
+
 export const AIAnalysis: React.FC<AIAnalysisProps> = ({
   performanceData,
   sprints,
@@ -41,15 +104,26 @@ export const AIAnalysis: React.FC<AIAnalysisProps> = ({
 }) => {
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [summary, setSummary] = useState<string>('');
+  const [metadata, setMetadata] = useState<AIAnalysisMetadata | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
 
+  // Calcular desarrolladores activos localmente para la UI
+  const activeDevelopers = developers.filter(dev => 
+    performanceData.some(p => 
+      p.developerId === dev.id && 
+      ((p.tasksAssigned && p.tasksAssigned > 0) || 
+       (p.hoursWorked && p.hoursWorked > 0) ||
+       (p.tasksCompleted && p.tasksCompleted > 0))
+    )
+  );
+
   const runAnalysis = async () => {
     setIsAnalyzing(true);
-    toast.loading('Analizando datos con IA...');
+    toast.loading('Analizando datos con IA (solo desarrolladores activos)...');
 
     try {
-      const request: AnalysisRequest = {
+      const request = {
         performanceData,
         sprints,
         developers,
@@ -65,9 +139,10 @@ export const AIAnalysis: React.FC<AIAnalysisProps> = ({
       if (result.success) {
         setInsights(result.insights);
         setSummary(result.summary);
+        setMetadata(result.metadata || null);
         setHasAnalyzed(true);
         toast.dismiss();
-        toast.success('Análisis completado exitosamente');
+        toast.success(`Análisis completado - ${activeDevelopers.length} desarrolladores activos analizados`);
       } else {
         throw new Error(result.error || 'Error en el análisis');
       }
@@ -90,7 +165,7 @@ export const AIAnalysis: React.FC<AIAnalysisProps> = ({
           <div>
             <div className="text-xl font-bold">Análisis IA con Gemini</div>
             <div className="text-sm text-white/80 font-normal">
-              Insights y recomendaciones inteligentes
+              Insights y recomendaciones inteligentes (desarrolladores activos)
             </div>
           </div>
         </CardTitle>
@@ -103,12 +178,30 @@ export const AIAnalysis: React.FC<AIAnalysisProps> = ({
             <h3 className="text-xl font-semibold mb-2">
               Análisis Inteligente de Rendimiento
             </h3>
-            <p className="text-muted-foreground mb-6">
-              Utiliza IA para obtener insights profundos sobre el rendimiento del equipo
+            <p className="text-muted-foreground mb-4">
+              Utiliza IA para obtener insights profundos sobre el rendimiento del equipo activo
             </p>
+            
+            {/* Información previa al análisis */}
+            <div className="bg-indigo-50 dark:bg-indigo-950 rounded-lg p-4 mb-6 max-w-md mx-auto">
+              <div className="flex items-center justify-center space-x-4 text-sm">
+                <div className="flex items-center">
+                  <UserCheck className="h-4 w-4 text-green-600 mr-1" />
+                  <span className="font-medium">{activeDevelopers.length} activos</span>
+                </div>
+                <div className="flex items-center">
+                  <Users className="h-4 w-4 text-gray-600 mr-1" />
+                  <span>{developers.length - activeDevelopers.length} inactivos</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Solo se analizarán desarrolladores con tareas asignadas o trabajo realizado
+              </p>
+            </div>
+            
             <Button 
               onClick={runAnalysis} 
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || activeDevelopers.length === 0}
               size="lg"
               className="bg-gradient-to-r from-indigo-500 to-cyan-500 hover:from-indigo-600 hover:to-cyan-600"
             >
@@ -116,6 +209,11 @@ export const AIAnalysis: React.FC<AIAnalysisProps> = ({
                 <>
                   <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                   Analizando...
+                </>
+              ) : activeDevelopers.length === 0 ? (
+                <>
+                  <AlertTriangle className="h-5 w-5 mr-2" />
+                  Sin desarrolladores activos
                 </>
               ) : (
                 <>
@@ -127,6 +225,29 @@ export const AIAnalysis: React.FC<AIAnalysisProps> = ({
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Analysis Info Banner */}
+            {metadata && (
+              <div className="bg-gradient-to-r from-indigo-100 to-cyan-100 dark:from-indigo-900 dark:to-cyan-900 p-4 rounded-xl border border-indigo-200 dark:border-indigo-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
+                      <UserCheck className="h-5 w-5 text-green-600 mr-2" />
+                      <span className="font-medium">{metadata.activeDevelopers} desarrolladores activos analizados</span>
+                    </div>
+                    {metadata.normalizedEfficiency && (
+                      <div className="flex items-center">
+                        <Sparkles className="h-4 w-4 text-purple-600 mr-1" />
+                        <span className="text-sm">Eficiencia normalizada (0-100%)</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {metadata.totalDevelopers - metadata.activeDevelopers} inactivos excluidos
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Summary */}
             <div className="bg-gradient-to-r from-indigo-100 to-cyan-100 dark:from-indigo-900 dark:to-cyan-900 p-6 rounded-xl">
               <h3 className="font-semibold text-lg mb-2 flex items-center">
