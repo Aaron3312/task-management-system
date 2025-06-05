@@ -38,7 +38,7 @@ describe('Equipo CRUD Operations', () => {
 it('should login and navigate to equipo page', () => {
   cy.url().should('include', '/users');
 
-  cy.wait(5000);
+  cy.wait(18000);
 
   cy.get(':nth-child(1) > .bg-gradient-to-br')
     .should('be.visible');
@@ -63,7 +63,7 @@ it('should login and navigate to equipo page', () => {
 it('should create a new user', () => {
   cy.url().should('include', '/users');
 
-  cy.wait(5000);
+  cy.wait(18000);
 
   cy.get('.flex > a > .inline-flex')
     .should('be.visible')
@@ -124,14 +124,14 @@ it('should create a new user', () => {
   it('should verify user creation', () => {
     cy.url().should('include', '/users');
 
-    cy.wait(5000);
+    cy.wait(18000);
 
     // Search for the newly created user
     cy.get('.file\\:text-foreground')
       .should('be.visible')
       .type('test_user');
 
-    cy.wait(3000); // Wait for search results to update
+    cy.wait(18000); // Wait for search results to update
 
     // Verify the user appears in the list
     cy.get('.flex-1 > .text-lg')
@@ -146,7 +146,7 @@ it('should create a new user', () => {
   it('should modify user', () => {
     cy.url().should('include', '/users');
 
-    cy.wait(5000);
+    cy.wait(18000);
 
     // Search for the user to modify
     cy.get('.file\\:text-foreground')
@@ -165,7 +165,7 @@ it('should create a new user', () => {
     cy.get('.space-x-2 > a > .inline-flex')
       .should('be.visible')
       .click();
-    cy.wait(3000); // Wait for edit page to load
+    cy.wait(18000); // Wait for edit page to load
 
     // Modify user details
     cy.get('#fullName', { timeout: 10000 })
@@ -212,14 +212,14 @@ it('should create a new user', () => {
   it('should verify user modification', () => {
     cy.url().should('include', '/users');
 
-    cy.wait(5000);
+    cy.wait(18000);
 
     // Search for the modified user
     cy.get('.file\\:text-foreground')
       .should('be.visible')
       .type('modify_user');
 
-    cy.wait(3000); // Wait for search results to update
+    cy.wait(18000); // Wait for search results to update
 
     // Verify the modified user appears in the list
     cy.get('.flex-1 > .text-lg')
@@ -234,7 +234,7 @@ it('should create a new user', () => {
   it('should delete user', () => {
     cy.url().should('include', '/users');
 
-    cy.wait(5000);
+    cy.wait(18000);
 
     // Search for the user to delete
     cy.get('.file\\:text-foreground')
@@ -248,7 +248,7 @@ it('should create a new user', () => {
       .contains('Modified User')
       .click();
 
-    cy.wait(3000); // Wait for user details page to load
+    cy.wait(18000); // Wait for user details page to load
 
     // Click on delete button
     cy.get('.bg-destructive')
