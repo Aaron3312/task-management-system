@@ -32,203 +32,203 @@ describe('Equipo CRUD Operations', () => {
     cy.get('.space-y-1 > [href="/users"] > .inline-flex').click();
     cy.wait(3500);
   });
-// // -----------------------------------------------------------------
-// // TEST 1: LOGIN AND NAVIGATION and verify users page and elements
-// // -----------------------------------------------------------------
-// it('should login and navigate to equipo page', () => {
-//   cy.url().should('include', '/users');
-
-//   cy.wait(5000);
-
-//   cy.get(':nth-child(1) > .bg-gradient-to-br')
-//     .should('be.visible');
-
-//   cy.get('.file\\:text-foreground')
-//     .should('be.visible');
-
-//   cy.get('[aria-controls="radix-«re»"]')
-//     .should('be.visible');
-
-//   cy.get('[aria-controls="radix-«rf»"]')
-//     .should('be.visible');
-
-//   cy.get('.flex > a > .inline-flex')
-//     .should('be.visible');
-
-//   cy.log('✅ Users page elements verification completed');
-// });
-// // -----------------------------------------------------------------
-// // TEST 2: CREATE A NEW USER
-// // -----------------------------------------------------------------
-// it('should create a new user', () => {
-//   cy.url().should('include', '/users');
-
-//   cy.wait(5000);
-
-//   cy.get('.flex > a > .inline-flex')
-//     .should('be.visible')
-//     .click();
-  
-//   // Wait for navigation to complete with increased timeout
-//   cy.url({ timeout: 10000 }).should('include', '/users/new');
-  
-//   cy.wait(3000); // Additional wait for page to fully load
-  
-//   cy.get('#fullName', { timeout: 10000 })
-//     .should('be.visible')
-//     .type('Test User');
-
-//   cy.get('#email', { timeout: 10000 })
-//     .should('be.visible')
-//     .type('test_user@oracle.com');
-  
-//   cy.get('#username', { timeout: 10000 })
-//     .should('be.visible')
-//     .type('test_user');
-
-//   cy.get(':nth-child(2) > :nth-child(2) > .border-input', { timeout: 10000 })
-//     .should('be.visible')
-//     .click({ force: true });
-
-//   // Select third option from dropdown
-//   cy.get('[role="option"]', { timeout: 5000 })
-//     .eq(2)
-//     .should('be.visible')
-//     .click({ force: true });
-
-//   cy.wait(1000); // Wait between dropdown selections
-
-//   cy.get(':nth-child(3) > .border-input', { timeout: 10000 })
-//     .should('be.visible')
-//     .click({ force: true });
-
-//   // Select first option from dropdown
-//   cy.get('[role="option"]', { timeout: 5000 })
-//     .eq(0)
-//     .should('be.visible')
-//     .click({ force: true });
-
-//   cy.wait(1000); // Wait before submitting
-
-//   cy.get('.bg-primary', { timeout: 10000 })
-//     .should('be.visible')
-//     .click();
-
-//   cy.wait(3000); // Wait for user creation to complete
-
-//   cy.log('✅ User creation completed');
-//   });
-// // -----------------------------------------------------------------
-// // TEST 3: VERIFY USER CREATION
-// // -----------------------------------------------------------------
-//   it('should verify user creation', () => {
-//     cy.url().should('include', '/users');
-
-//     cy.wait(5000);
-
-//     // Search for the newly created user
-//     cy.get('.file\\:text-foreground')
-//       .should('be.visible')
-//       .type('test_user');
-
-//     cy.wait(3000); // Wait for search results to update
-
-//     // Verify the user appears in the list
-//     cy.get('.flex-1 > .text-lg')
-//       .contains('Test User')
-//       .should('be.visible');
-
-//     cy.log('✅ User creation verification completed');
-//   });
-// // -----------------------------------------------------------------
-// // TEST 4: modify user
-// // -----------------------------------------------------------------
-//   it('should modify user', () => {
-//     cy.url().should('include', '/users');
-
-//     cy.wait(5000);
-
-//     // Search for the user to modify
-//     cy.get('.file\\:text-foreground')
-//       .should('be.visible')
-//       .type('test_user');
-
-//     cy.wait(3000); // Wait for search results to update
-
-//     // Click on the user to edit
-//     cy.get('.flex-1 > .text-lg')
-//       .contains('Test User')
-//       .click();
-
-//     cy.wait(3000); // Wait for user details page to load
-
-//     cy.get('.space-x-2 > a > .inline-flex')
-//       .should('be.visible')
-//       .click();
-//     cy.wait(3000); // Wait for edit page to load
-
-//     // Modify user details
-//     cy.get('#fullName', { timeout: 10000 })
-//       .should('be.visible')
-//       .clear()
-//       .type('Modified User');
-
-//     cy.get('#email', { timeout: 10000 })
-//       .should('be.visible')
-//       .clear()
-//       .type('modify@user.com');
-//     cy.get('#username', { timeout: 10000 })
-//       .should('be.visible') 
-//       .clear()
-//       .type('modify_user');
-
-//     cy.get(':nth-child(2) > :nth-child(2) > .border-input', { timeout: 10000 })
-//       .should('be.visible')
-//       .click({ force: true });
-//     // Select third option from dropdown
-//     cy.get('[role="option"]', { timeout: 5000 })
-//       .eq(3)
-//       .should('be.visible')
-//       .click({ force: true });
-//     cy.wait(1000); // Wait between dropdown selections
-//     cy.get(':nth-child(3) > .border-input', { timeout: 10000 })
-//       .should('be.visible')
-//       .click({ force: true });
-//     // Select first option from dropdown
-//     cy.get('[role="option"]', { timeout: 5000 })
-//       .eq(2)
-//       .should('be.visible')
-//       .click({ force: true });
-//     cy.wait(1000); // Wait before submitting
-//     cy.get('.bg-primary', { timeout: 10000 })
-//       .should('be.visible')
-//       .click();
-//     cy.wait(3000); // Wait for user modification to complete
-//     cy.log('✅ User modification completed');
-//   });
-// // -----------------------------------------------------------------
-// // TEST 5: VERIFY USER MODIFICATION
-// // -----------------------------------------------------------------
-//   it('should verify user modification', () => {
-//     cy.url().should('include', '/users');
-
-//     cy.wait(5000);
-
-//     // Search for the modified user
-//     cy.get('.file\\:text-foreground')
-//       .should('be.visible')
-//       .type('modify_user');
-
-//     cy.wait(3000); // Wait for search results to update
-
-//     // Verify the modified user appears in the list
-//     cy.get('.flex-1 > .text-lg')
-//       .contains('Modified User')
-//       .should('be.visible');
-
-//     cy.log('✅ User modification verification completed');
-//   });
 // -----------------------------------------------------------------
+// TEST 1: LOGIN AND NAVIGATION and verify users page and elements
+// -----------------------------------------------------------------
+it('should login and navigate to equipo page', () => {
+  cy.url().should('include', '/users');
+
+  cy.wait(5000);
+
+  cy.get(':nth-child(1) > .bg-gradient-to-br')
+    .should('be.visible');
+
+  cy.get('.file\\:text-foreground')
+    .should('be.visible');
+
+  cy.get('[aria-controls="radix-«re»"]')
+    .should('be.visible');
+
+  cy.get('[aria-controls="radix-«rf»"]')
+    .should('be.visible');
+
+  cy.get('.flex > a > .inline-flex')
+    .should('be.visible');
+
+  cy.log('✅ Users page elements verification completed');
+});
+// -----------------------------------------------------------------
+// TEST 2: CREATE A NEW USER
+// -----------------------------------------------------------------
+it('should create a new user', () => {
+  cy.url().should('include', '/users');
+
+  cy.wait(5000);
+
+  cy.get('.flex > a > .inline-flex')
+    .should('be.visible')
+    .click();
+  
+  // Wait for navigation to complete with increased timeout
+  cy.url({ timeout: 10000 }).should('include', '/users/new');
+  
+  cy.wait(3000); // Additional wait for page to fully load
+  
+  cy.get('#fullName', { timeout: 10000 })
+    .should('be.visible')
+    .type('Test User');
+
+  cy.get('#email', { timeout: 10000 })
+    .should('be.visible')
+    .type('test_user@oracle.com');
+  
+  cy.get('#username', { timeout: 10000 })
+    .should('be.visible')
+    .type('test_user');
+
+  cy.get(':nth-child(2) > :nth-child(2) > .border-input', { timeout: 10000 })
+    .should('be.visible')
+    .click({ force: true });
+
+  // Select third option from dropdown
+  cy.get('[role="option"]', { timeout: 5000 })
+    .eq(2)
+    .should('be.visible')
+    .click({ force: true });
+
+  cy.wait(1000); // Wait between dropdown selections
+
+  cy.get(':nth-child(3) > .border-input', { timeout: 10000 })
+    .should('be.visible')
+    .click({ force: true });
+
+  // Select first option from dropdown
+  cy.get('[role="option"]', { timeout: 5000 })
+    .eq(0)
+    .should('be.visible')
+    .click({ force: true });
+
+  cy.wait(1000); // Wait before submitting
+
+  cy.get('.bg-primary', { timeout: 10000 })
+    .should('be.visible')
+    .click();
+
+  cy.wait(3000); // Wait for user creation to complete
+
+  cy.log('✅ User creation completed');
+  });
+// -----------------------------------------------------------------
+// TEST 3: VERIFY USER CREATION
+// -----------------------------------------------------------------
+  it('should verify user creation', () => {
+    cy.url().should('include', '/users');
+
+    cy.wait(5000);
+
+    // Search for the newly created user
+    cy.get('.file\\:text-foreground')
+      .should('be.visible')
+      .type('test_user');
+
+    cy.wait(3000); // Wait for search results to update
+
+    // Verify the user appears in the list
+    cy.get('.flex-1 > .text-lg')
+      .contains('Test User')
+      .should('be.visible');
+
+    cy.log('✅ User creation verification completed');
+  });
+// -----------------------------------------------------------------
+// TEST 4: modify user
+// -----------------------------------------------------------------
+  it('should modify user', () => {
+    cy.url().should('include', '/users');
+
+    cy.wait(5000);
+
+    // Search for the user to modify
+    cy.get('.file\\:text-foreground')
+      .should('be.visible')
+      .type('test_user');
+
+    cy.wait(3000); // Wait for search results to update
+
+    // Click on the user to edit
+    cy.get('.flex-1 > .text-lg')
+      .contains('Test User')
+      .click();
+
+    cy.wait(3000); // Wait for user details page to load
+
+    cy.get('.space-x-2 > a > .inline-flex')
+      .should('be.visible')
+      .click();
+    cy.wait(3000); // Wait for edit page to load
+
+    // Modify user details
+    cy.get('#fullName', { timeout: 10000 })
+      .should('be.visible')
+      .clear()
+      .type('Modified User');
+
+    cy.get('#email', { timeout: 10000 })
+      .should('be.visible')
+      .clear()
+      .type('modify@user.com');
+    cy.get('#username', { timeout: 10000 })
+      .should('be.visible') 
+      .clear()
+      .type('modify_user');
+
+    cy.get(':nth-child(2) > :nth-child(2) > .border-input', { timeout: 10000 })
+      .should('be.visible')
+      .click({ force: true });
+    // Select third option from dropdown
+    cy.get('[role="option"]', { timeout: 5000 })
+      .eq(3)
+      .should('be.visible')
+      .click({ force: true });
+    cy.wait(1000); // Wait between dropdown selections
+    cy.get(':nth-child(3) > .border-input', { timeout: 10000 })
+      .should('be.visible')
+      .click({ force: true });
+    // Select first option from dropdown
+    cy.get('[role="option"]', { timeout: 5000 })
+      .eq(2)
+      .should('be.visible')
+      .click({ force: true });
+    cy.wait(1000); // Wait before submitting
+    cy.get('.bg-primary', { timeout: 10000 })
+      .should('be.visible')
+      .click();
+    cy.wait(3000); // Wait for user modification to complete
+    cy.log('✅ User modification completed');
+  });
+// -----------------------------------------------------------------
+// TEST 5: VERIFY USER MODIFICATION
+// -----------------------------------------------------------------
+  it('should verify user modification', () => {
+    cy.url().should('include', '/users');
+
+    cy.wait(5000);
+
+    // Search for the modified user
+    cy.get('.file\\:text-foreground')
+      .should('be.visible')
+      .type('modify_user');
+
+    cy.wait(3000); // Wait for search results to update
+
+    // Verify the modified user appears in the list
+    cy.get('.flex-1 > .text-lg')
+      .contains('Modified User')
+      .should('be.visible');
+
+    cy.log('✅ User modification verification completed');
+  });
+-----------------------------------------------------------------
 // TEST 6: DELETE USER
 // -----------------------------------------------------------------
   it('should delete user', () => {
