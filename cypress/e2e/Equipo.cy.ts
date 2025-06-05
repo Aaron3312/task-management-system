@@ -263,4 +263,57 @@ it('should create a new user', () => {
 
     cy.log('✅ User deletion completed');
   });
+  // // -----------------------------------------------------------------
+  // // TEST 7: VERIFY USER DELETION
+  // // -----------------------------------------------------------------
+  // it('should verify user deletion', () => {
+  //   cy.url().should('include', '/users');
+
+  //   cy.wait(5000);
+
+  //   // Search for the deleted user
+  //   cy.get('.file\\:text-foreground')
+  //     .should('be.visible')
+  //     .type('modify_user');
+
+  //   cy.wait(3000); // Wait for search results to update
+  //   cy.get('body').then(($body) => {
+  //     if ($body.text().includes('cambio_Prueba_sprint')) {
+  //       cy.log('❌ Sprint still found - deletion may have failed');
+  //       cy.get('body').should('not.contain.text', 'modify_user');
+  //     } else {
+  //       cy.log('✅ Sprint successfully deleted - not found in search results');
+        
+  //       // Verify empty state or no results message
+  //       const noResultsMessages = [
+  //         'No se encontraron usuarios',
+  //         'Sin resultados',
+  //         'No user found',
+  //         'No hay sprints',
+  //         'empty'
+  //       ];
+        
+  //       let emptyStateFound = false;
+  //       noResultsMessages.forEach((message) => {
+  //         if ($body.text().includes(message)) {
+  //           cy.log(`✅ Empty state confirmed: ${message}`);
+  //           emptyStateFound = true;
+  //         }
+  //       });
+        
+  //       if (!emptyStateFound) {
+  //         cy.log('✅ Sprint not found in search results - deletion confirmed');
+  //       }
+  //     }
+  //   });
+    
+  //   // Clear search to verify sprint is completely gone
+  //   cy.get('.file\\:text-foreground').clear();
+  //   cy.wait(1000);
+    
+  //   // Verify sprint doesn't appear in full list either
+  //   cy.get('body').should('not.contain.text', 'modify_user');
+    
+  //   cy.log('✅ Sprint deletion verification completed');
+  //   });
 });
