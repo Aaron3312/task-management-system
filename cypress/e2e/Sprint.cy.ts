@@ -515,8 +515,6 @@ describe('Sprint CRUD Operations', () => {
 //     cy.wait(1000);
 //     cy.realPress(['Tab']);
 //     cy.wait(1000);
-//     cy.realPress(['Tab']);
-//     cy.wait(1000);
 //     cy.realPress(['Enter']);
 //     cy.wait(2000);
 //   });
