@@ -19,7 +19,7 @@ describe('Sprint CRUD Operations', () => {
   beforeEach(() => {
     // Login before each test
     cy.visit(Cypress.config('baseUrl'));
-    cy.wait(3000); // Wait for page to fully load
+    cy.wait(10000); // Wait for page to fully load
 
     // Login with credentials
     cy.get('#username', { timeout: 10000 }).should('be.visible').type(Cypress.env('USERNAME'));
