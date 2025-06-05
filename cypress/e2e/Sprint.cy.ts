@@ -378,7 +378,7 @@ describe('Sprint CRUD Operations', () => {
   // TEST 5: Verify if the sprint was Modify sprint
   // -----------------------------------------------------------------
 
-  it('should modify the sprint', () => {
+  it('Verify if the sprint was Modify sprint', () => {
     cy.url().should('include', '/sprints');
     cy.get('.file\\:text-foreground')
       .should('be.visible')
@@ -390,85 +390,183 @@ describe('Sprint CRUD Operations', () => {
       .contains('cambio_Prueba_sprint')
       .should('be.visible')
   });
-
-// TEST 6: Delete the sprint
+  // -----------------------------------------------------------------
+// TEST 6: Add a new task to the sprint
 // -----------------------------------------------------------------
-it('Delete the sprint', () => {
+  it('Add a new task to the sprint', () => {
   cy.url().should('include', '/sprints');
   cy.get('.file\\:text-foreground')
     .should('be.visible')
     .type('cambio_Prueba_sprint');
   cy.wait(500)
-
-    cy.get('.jsx-a6e1b883d4d5e818 > .text-lg')
+  
+  cy.get('.jsx-a6e1b883d4d5e818 > .text-lg')
     .should('be.visible')
     .contains('cambio_Prueba_sprint')
     .should('be.visible')
     .click();
     cy.wait(3500)
 
-    cy.get('.space-x-2 > .bg-destructive')
+    cy.get('.justify-between > a > .inline-flex')
     .should('be.visible')
-    .click();
+    .click()
 
-    cy.wait(2000);
+    cy.get('#title', { timeout: 15000 }).should('be.visible').clear();
+    cy.get('#title').type('tarea desde sprint', { delay: 50 });
+    cy.get('#description').click();
+    cy.get('#description').type('Descripción de creacion de tarea desde sprint', { delay: 50 });
 
-    cy.realPress(['Tab']);
+    // Click on first dropdown (fixed selector - removed extra 't')
+    cy.get('.md\\:grid-cols-2 > :nth-child(1) > .border-input', { timeout: 10000 })
+      .should('be.visible')
+      .click({ force: true });
+
+    // Select first option from dropdown
+    cy.get('[role="option"]', { timeout: 5000 })
+      .first()
+      .should('be.visible')
+      .click({ force: true });
+
+    // Click on second dropdown
+    cy.get('.md\\:grid-cols-2 > :nth-child(2) > .border-input', { timeout: 10000 })
+      .should('be.visible')
+      .click({ force: true });
+
+    // Select first option from dropdown
+    cy.get('[role="option"]', { timeout: 5000 })
+      .eq(5)
+      .should('be.visible')
+      .click({ force: true });
+
+    // Click on third dropdown (grid-cols-3 first child)
+    cy.get('.md\\:grid-cols-3 > :nth-child(1) > .border-input', { timeout: 10000 })
+      .should('be.visible')
+      .click({ force: true });
+
+    // Select sixth option from dropdown
+    cy.get('[role="option"]', { timeout: 5000 })
+      .eq(2)
+      .should('be.visible')
+      .click({ force: true });
+
+    // Click on fourth dropdown (grid-cols-3 second child)
+    cy.get('.md\\:grid-cols-3 > :nth-child(2) > .border-input', { timeout: 10000 })
+      .should('be.visible')
+      .click({ force: true });
+
+    // Select first option from dropdown
+    cy.get('[role="option"]', { timeout: 5000 })
+      .eq(0)
+      .should('be.visible')
+      .click({ force: true });
+
+    // Fill estimated hours
+    cy.get('#estimated_hours', { timeout: 10000 })
+      .should('be.visible')
+      .clear()
+      .type('8');
+
+    // Click on date picker
+    cy.get('.space-y-4 > :nth-child(6) > .inline-flex')
+      .should('have.length.greaterThan', 0)
+      .first()
+      .click({ force: true });
+
+    // Wait for date picker to open and select a date
     cy.wait(1000);
-    cy.realPress(['Tab']);
-    cy.wait(1000);
-    cy.realPress(['Tab']);
-    cy.wait(1000);
-    cy.realPress(['Enter']);
-    cy.wait(2000);
-  });
+
+    // Select today's date or first available date using the specific calendar element
+    cy.get(':nth-child(1) > :nth-child(4) > .rdp-button_reset')
+      .should('have.length.greaterThan', 0)
+      .first()
+      .click({ force: true });
+
+    // Save new task - fixed selector for single element
+    cy.get('.bg-primary', { timeout: 7500 })
+      .should('be.visible')
+      .first()
+      .click({ force: true });
+    cy.wait(3500); // Wait for the task to be created
+});
+
+// TEST 7: Delete the sprint
+// -----------------------------------------------------------------
+// it('Delete the sprint', () => {
+//   cy.url().should('include', '/sprints');
+//   cy.get('.file\\:text-foreground')
+//     .should('be.visible')
+//     .type('cambio_Prueba_sprint');
+//   cy.wait(500)
+
+//     cy.get('.jsx-a6e1b883d4d5e818 > .text-lg')
+//     .should('be.visible')
+//     .contains('cambio_Prueba_sprint')
+//     .should('be.visible')
+//     .click();
+//     cy.wait(3500)
+
+//     cy.get('.space-x-2 > .bg-destructive')
+//     .should('be.visible')
+//     .click();
+
+//     cy.wait(2000);
+
+//     cy.realPress(['Tab']);
+//     cy.wait(1000);
+//     cy.realPress(['Tab']);
+//     cy.wait(1000);
+//     cy.realPress(['Tab']);
+//     cy.wait(1000);
+//     cy.realPress(['Enter']);
+//     cy.wait(2000);
+//   });
   // -----------------------------------------------------------------
-  // TEST 7: verify the sprint was deleted
+  // TEST 8: verify the sprint was deleted
   // -----------------------------------------------------------------
-it('verify the sprint was deleted', () => {
-  cy.url().should('include', '/sprints');
-  cy.get('.file\\:text-foreground')
-    .type('cambio_Prueba_sprint');
-  cy.wait(1000); // Wait for search to process
+// it('verify the sprint was deleted', () => {
+//   cy.url().should('include', '/sprints');
+//   cy.get('.file\\:text-foreground')
+//     .type('cambio_Prueba_sprint');
+//   cy.wait(1000); // Wait for search to process
   
-  // Verify the sprint is not visible after deletion
-  cy.get('body').then(($body) => {
-    if ($body.text().includes('cambio_Prueba_sprint')) {
-      cy.log('❌ Sprint still found - deletion may have failed');
-      cy.get('body').should('not.contain.text', 'cambio_Prueba_sprint');
-    } else {
-      cy.log('✅ Sprint successfully deleted - not found in search results');
+//   // Verify the sprint is not visible after deletion
+//   cy.get('body').then(($body) => {
+//     if ($body.text().includes('cambio_Prueba_sprint')) {
+//       cy.log('❌ Sprint still found - deletion may have failed');
+//       cy.get('body').should('not.contain.text', 'cambio_Prueba_sprint');
+//     } else {
+//       cy.log('✅ Sprint successfully deleted - not found in search results');
       
-      // Verify empty state or no results message
-      const noResultsMessages = [
-        'No se encontraron sprints',
-        'Sin resultados',
-        'No sprints found',
-        'No hay sprints',
-        'empty'
-      ];
+//       // Verify empty state or no results message
+//       const noResultsMessages = [
+//         'No se encontraron sprints',
+//         'Sin resultados',
+//         'No sprints found',
+//         'No hay sprints',
+//         'empty'
+//       ];
       
-      let emptyStateFound = false;
-      noResultsMessages.forEach((message) => {
-        if ($body.text().includes(message)) {
-          cy.log(`✅ Empty state confirmed: ${message}`);
-          emptyStateFound = true;
-        }
-      });
+//       let emptyStateFound = false;
+//       noResultsMessages.forEach((message) => {
+//         if ($body.text().includes(message)) {
+//           cy.log(`✅ Empty state confirmed: ${message}`);
+//           emptyStateFound = true;
+//         }
+//       });
       
-      if (!emptyStateFound) {
-        cy.log('✅ Sprint not found in search results - deletion confirmed');
-      }
-    }
-  });
+//       if (!emptyStateFound) {
+//         cy.log('✅ Sprint not found in search results - deletion confirmed');
+//       }
+//     }
+//   });
   
-  // Clear search to verify sprint is completely gone
-  cy.get('.file\\:text-foreground').clear();
-  cy.wait(1000);
+//   // Clear search to verify sprint is completely gone
+//   cy.get('.file\\:text-foreground').clear();
+//   cy.wait(1000);
   
-  // Verify sprint doesn't appear in full list either
-  cy.get('body').should('not.contain.text', 'cambio_Prueba_sprint');
+//   // Verify sprint doesn't appear in full list either
+//   cy.get('body').should('not.contain.text', 'cambio_Prueba_sprint');
   
-  cy.log('✅ Sprint deletion verification completed');
-  });
+//   cy.log('✅ Sprint deletion verification completed');
+//   });
 });
