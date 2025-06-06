@@ -15,3 +15,9 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
+import 'cypress-real-events/support';
+Cypress.on('uncaught:exception', (err) => {
+    if (err.message.includes('ResizeObserver loop completed')) {
+    return false; // Ignora este error
+    }
+});

@@ -57,6 +57,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "cypress": "^14.3.2",
+    "cypress-real-events": "^1.14.0",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
     "prettier": "^3.5.3",

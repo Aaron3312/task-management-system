@@ -1,37 +1,30 @@
 /// <reference types="cypress" />
 // ***********************************************
-// This example commands.ts shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
+// Este archivo muestra cómo crear comandos personalizados.
+// Documentación oficial: https://on.cypress.io/custom-commands
 // ***********************************************
-//
-//
-// -- This is a parent command --
+
+// -- Comandos personalizados de ejemplo --
 // Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
 // Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
 // Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-//
-// declare global {
-//   namespace Cypress {
-//     interface Chainable {
-//       login(email: string, password: string): Chainable<void>
-//       drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       visit(originalFn: CommandOriginalFn, url: string, options: Partial<VisitOptions>): Chainable<Element>
-//     }
-//   }
-// }
+
+// ✅ Nuevo comando personalizado: espera hasta que un elemento sea visible
+Cypress.Commands.add('waitForVisible', (selector: string, timeout = 10000) => {
+  return cy.get(selector, { timeout }).should('exist').and('be.visible');
+});
+
+// ✅ Extiende los tipos de Cypress para incluir `waitForVisible`
+declare global {
+namespace Cypress {
+    interface Chainable {
+      waitForVisible(selector: string, timeout?: number): Chainable<JQuery<HTMLElement>>;
+      login(email: string, password: string): Chainable<void>;
+      drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>;
+      dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>;
+    }
+  }
+}
+
+export {};

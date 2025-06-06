@@ -22,7 +22,6 @@ describe('Basic test for login', () => {
     /* ==== End Cypress Studio ==== */
     /* ==== Generated with Cypress Studio ==== */
     cy.get('.inline-flex').click();
-    cy.get('[href="/projects"] > .inline-flex > .ml-2').click();
     /* ==== End Cypress Studio ==== */
   });
 
