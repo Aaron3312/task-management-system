@@ -30,7 +30,7 @@
     cy.get('.inline-flex').click();
     // cy.get('[href="/task"] > .inline-flex > .ml-2').click();
     cy.get('.space-y-1 > [href="/tasks"] > .inline-flex').click();
-    cy.wait(3500);
+    cy.wait(5000);
   });
 
   

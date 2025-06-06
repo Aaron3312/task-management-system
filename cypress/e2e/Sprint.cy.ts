@@ -295,6 +295,9 @@ describe('Sprint CRUD Operations', () => {
     cy.get('.file\\:text-foreground')
       .should('be.visible')
       .type('Prueba_sprint');
+
+    cy.wait(3500); // Wait for search to process
+    
     cy.get('.jsx-a6e1b883d4d5e818 > .text-lg')
       .should('be.visible')
       .contains('Prueba_sprint')
@@ -308,6 +311,9 @@ describe('Sprint CRUD Operations', () => {
     cy.get('.file\\:text-foreground')
       .should('be.visible')
       .type('Prueba_sprint');
+
+    cy.wait(3500); // Wait for search to process
+
     cy.get('.jsx-a6e1b883d4d5e818 > .text-lg')
       .should('be.visible')
       .contains('Prueba_sprint')
@@ -324,6 +330,8 @@ describe('Sprint CRUD Operations', () => {
     cy.get('.file\\:text-foreground')
       .should('be.visible')
       .type('Prueba_sprint');
+
+    cy.wait(3500); // Wait for search to process
 
     cy.get('.jsx-a6e1b883d4d5e818 > .text-lg')
       .should('be.visible')
@@ -383,7 +391,8 @@ describe('Sprint CRUD Operations', () => {
     cy.get('.file\\:text-foreground')
       .should('be.visible')
       .type('cambio_Prueba_sprint');
-    cy.wait(500)
+
+    cy.wait(3500)
     
     cy.get('.jsx-a6e1b883d4d5e818 > .text-lg')
       .should('be.visible')
@@ -398,7 +407,8 @@ describe('Sprint CRUD Operations', () => {
   cy.get('.file\\:text-foreground')
     .should('be.visible')
     .type('cambio_Prueba_sprint');
-  cy.wait(500)
+    
+  cy.wait(3500)
   
   cy.get('.jsx-a6e1b883d4d5e818 > .text-lg')
     .should('be.visible')
