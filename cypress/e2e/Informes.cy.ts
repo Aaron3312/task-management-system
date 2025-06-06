@@ -28,8 +28,8 @@ describe('Project Management CRUD Operations', () => {
 
     // Navigate to projects section
     cy.get('.inline-flex').click();
-    cy.get('[href="/reports"] > .inline-flex > .ml-2').click();
-    cy.wait(3500);
+    cy.contains('Informes').click();
+    cy.wait(4000);
   });
 
   // TEST 1: LOGIN AND NAVIGATION

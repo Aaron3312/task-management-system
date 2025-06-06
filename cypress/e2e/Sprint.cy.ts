@@ -28,8 +28,8 @@ describe('Sprint CRUD Operations', () => {
 
     // Navigate to projects section
     cy.get('.inline-flex').click();
-    cy.get('[href="/sprints"] > .inline-flex > .ml-2').click();
-    cy.wait(3500);
+    cy.contains('Sprints').click();
+    cy.wait(4000);
   });
 
 
