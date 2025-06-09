@@ -4,8 +4,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
-import { UserRole, ITask, ISprint } from '@/core/interfaces/models';
-import { TaskService, SprintService, UserService, TaskAssigneeService } from '@/services/api';
+import { UserRole, ITask, ISprint, IProject } from '@/core/interfaces/models';
+import { TaskService, SprintService, UserService, TaskAssigneeService, ProjectService } from '@/services/api';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import { PerformancePDFExporter } from '@/utils/pdfExport';
@@ -46,14 +46,18 @@ export default function DeveloperPerformancePage() {
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedSprint, setSelectedSprint] = useState<string>('all');
   const [selectedDeveloper, setSelectedDeveloper] = useState<string>('all');
   const [performanceData, setPerformanceData] = useState<DeveloperPerformance[]>([]);
   const [developers, setDevelopers] = useState<Developer[]>([]);
   const [sprints, setSprints] = useState<ISprint[]>([]);
+  const [projects, setProjects] = useState<IProject[]>([]);
   const [hoursWorkedChartData, setHoursWorkedChartData] = useState<ChartData[]>([]);
   const [tasksCompletedChartData, setTasksCompletedChartData] = useState<ChartData[]>([]);
   const [totalHoursPerSprintData, setTotalHoursPerSprintData] = useState<ChartData[]>([]);
+  const [rawTasksData, setRawTasksData] = useState<any[]>([]);
+  const [rawAssigneesData, setRawAssigneesData] = useState<any[]>([]);
 
   const demoUser = {
     username: 'djeison',
@@ -68,11 +72,161 @@ export default function DeveloperPerformancePage() {
     '#3b82f6', '#f97316', '#84cc16', '#06b6d4', '#8b5cf6'
   ];
 
+  // Initial load
   useEffect(() => {
-    fetchData();
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch all required data
+        const [tasksData, sprintsData, usersData, assigneesData, projectsData] = await Promise.all([
+          TaskService.getTasks(),
+          SprintService.getSprints(),
+          UserService.getUsers(),
+          TaskAssigneeService.getTaskAssignees(),
+          ProjectService.getProjects()
+        ]);
+
+        setProjects(projectsData);
+        
+        // Set default project if not selected
+        const defaultProjectId = projectsData.length > 0 ? projectsData[0].id!.toString() : '';
+        if (!selectedProject) {
+          setSelectedProject(defaultProjectId);
+        }
+
+        // Calculate data for the default or selected project
+        const currentProjectId = selectedProject || defaultProjectId;
+        calculateProjectData(tasksData, sprintsData, usersData, assigneesData, projectsData, currentProjectId);
+      } catch (error) {
+        console.error('Error fetching performance data:', error);
+        toast.error('Error al cargar los datos de rendimiento');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
+  // Recalculate when project changes
+  useEffect(() => {
+    if (selectedProject && projects.length > 0) {
+      fetchData();
+    }
+  }, [selectedProject]);
+
+  const calculateProjectData = async (tasksData: any, sprintsData: any, usersData: any, assigneesData: any, projectsData: any, projectId: string) => {
+    // Calculate performance data - only for selected project
+    const performance: DeveloperPerformance[] = [];
+    const currentProjectId = parseInt(projectId);
+    
+    // Store raw data for unique task counting
+    setRawTasksData(tasksData);
+    setRawAssigneesData(assigneesData);
+    
+    // Filter sprints by selected project
+    const projectSprints = sprintsData.filter((sprint: any) => sprint.project_id === currentProjectId);
+    setSprints(projectSprints);
+
+    // Debug: Find the selected project name
+    const selectedProjectName = projectsData.find((p: any) => p.id === currentProjectId)?.name || 'Unknown';
+    
+    console.log('=== DEBUG: Task Count Analysis ===');
+    console.log(`Selected Project: ${selectedProjectName} (ID: ${currentProjectId})`);
+    console.log(`Project Sprints Found: ${projectSprints.length}`);
+    console.log('Project Sprints:', projectSprints.map((s: any) => ({ id: s.id, name: s.name })));
+
+    // Count all tasks in project (through sprints)
+    const allProjectTasks = tasksData.filter((task: any) => 
+      projectSprints.some((sprint: any) => sprint.id === task.sprint_id)
+    );
+    console.log(`Total tasks in project (via sprints): ${allProjectTasks.length}`);
+    
+    // Count completed tasks using TaskStatus.COMPLETED (status === 2)
+    const completedTasksByStatus = allProjectTasks.filter((task: any) => task.status === 2);
+    console.log(`Tasks with status === 2 (COMPLETED): ${completedTasksByStatus.length}`);
+    
+    // Count tasks with real_hours > 0 (our current metric)
+    const tasksWithRealHours = allProjectTasks.filter((task: any) => task.real_hours > 0);
+    console.log(`Tasks with real_hours > 0: ${tasksWithRealHours.length}`);
+
+    for (const sprint of projectSprints) {
+      for (const developer of usersData) {
+        // Get tasks assigned to this developer in this sprint
+        const developerAssignments = assigneesData.filter(
+          (assignee: any) => assignee.user_id === developer.id && 
+          assignee.task?.sprint_id === sprint.id
+        );
+
+        const assignedTasks = developerAssignments.map((a: any) => a.task).filter(Boolean);
+        const completedTasks = assignedTasks.filter((task: any) => task.real_hours > 0);
+
+        // Calculate total hours worked
+        const hoursWorked = completedTasks.reduce((sum: number, task: any) => {
+          const taskAssignees = assigneesData.filter((a: any) => a.task_id === task.id);
+          const assigneeCount = taskAssignees.length || 1;
+          return sum + ((task.real_hours || 0) / assigneeCount);
+        }, 0);
+
+        // Calculate efficiency
+        const totalEstimated = completedTasks.reduce((sum: number, task: any) => 
+          sum + task.estimated_hours, 0
+        );
+        
+        const efficiency = totalEstimated > 0 && hoursWorked > 0 
+          ? (totalEstimated / hoursWorked) * 100 
+          : 0;
+
+        performance.push({
+          sprintId: sprint.id!,
+          sprintName: sprint.name,
+          developerId: developer.id!,
+          developerName: developer.full_name || developer.username,
+          hoursWorked,
+          tasksCompleted: completedTasks.length,
+          tasksAssigned: assignedTasks.length,
+          efficiency
+        });
+      }
+    }
+
+    setPerformanceData(performance);
+    
+    // Debug: Show final performance calculation
+    const totalTasksCompletedDebug = performance.reduce((sum, p) => sum + p.tasksCompleted, 0);
+    console.log(`Final calculated completed tasks count: ${totalTasksCompletedDebug}`);
+    
+    console.log('Performance breakdown by developer:');
+    const performanceByDev = performance.reduce((acc: any, p) => {
+      if (!acc[p.developerName]) {
+        acc[p.developerName] = { totalTasks: 0, sprints: [] };
+      }
+      acc[p.developerName].totalTasks += p.tasksCompleted;
+      acc[p.developerName].sprints.push({
+        sprint: p.sprintName,
+        tasks: p.tasksCompleted
+      });
+      return acc;
+    }, {});
+    
+    Object.entries(performanceByDev).forEach(([devName, data]: [string, any]) => {
+      console.log(`${devName}: ${data.totalTasks} tasks`);
+      data.sprints.forEach((s: any) => console.log(`  - ${s.sprint}: ${s.tasks} tasks`));
+    });
+    console.log('=== END DEBUG ===');
+    
+    // Filter developers with actual data
+    const developersWithData = usersData.filter((dev: any) => 
+      performance.some(p => p.developerId === dev.id && (p.hoursWorked > 0 || p.tasksCompleted > 0))
+    );
+    setDevelopers(developersWithData);
+
+    prepareChartData(performance, sprintsData, developersWithData);
+  };
+
   const fetchData = async () => {
+    if (!selectedProject) return;
+    
     setIsLoading(true);
     try {
       // Fetch all required data
@@ -83,60 +237,7 @@ export default function DeveloperPerformancePage() {
         TaskAssigneeService.getTaskAssignees()
       ]);
 
-      setSprints(sprintsData);
-
-      // Calculate performance data
-      const performance: DeveloperPerformance[] = [];
-
-      for (const sprint of sprintsData) {
-        for (const developer of usersData) {
-          // Get tasks assigned to this developer in this sprint
-          const developerAssignments = assigneesData.filter(
-            assignee => assignee.user_id === developer.id && 
-            assignee.task?.sprint_id === sprint.id
-          );
-
-          const assignedTasks = developerAssignments.map(a => a.task).filter(Boolean);
-          const completedTasks = assignedTasks.filter(task => task.real_hours > 0);
-
-          // Calculate total hours worked
-          const hoursWorked = completedTasks.reduce((sum, task) => {
-            const taskAssignees = assigneesData.filter(a => a.task_id === task.id);
-            const assigneeCount = taskAssignees.length || 1;
-            return sum + ((task.real_hours || 0) / assigneeCount);
-          }, 0);
-
-          // Calculate efficiency
-          const totalEstimated = completedTasks.reduce((sum, task) => 
-            sum + task.estimated_hours, 0
-          );
-          
-          const efficiency = totalEstimated > 0 && hoursWorked > 0 
-            ? (totalEstimated / hoursWorked) * 100 
-            : 0;
-
-          performance.push({
-            sprintId: sprint.id!,
-            sprintName: sprint.name,
-            developerId: developer.id!,
-            developerName: developer.full_name || developer.username,
-            hoursWorked,
-            tasksCompleted: completedTasks.length,
-            tasksAssigned: assignedTasks.length,
-            efficiency
-          });
-        }
-      }
-
-      setPerformanceData(performance);
-      
-      // Filter developers with actual data
-      const developersWithData = usersData.filter(dev => 
-        performance.some(p => p.developerId === dev.id && (p.hoursWorked > 0 || p.tasksCompleted > 0))
-      );
-      setDevelopers(developersWithData);
-
-      prepareChartData(performance, sprintsData, developersWithData);
+      await calculateProjectData(tasksData, sprintsData, usersData, assigneesData, projects, selectedProject);
     } catch (error) {
       console.error('Error fetching performance data:', error);
       toast.error('Error al cargar los datos de rendimiento');
@@ -150,10 +251,14 @@ export default function DeveloperPerformancePage() {
     sprintsData: ISprint[],
     developersData: Developer[]
   ) => {
+    // Filter sprints by selected project first
+    const currentProjectId = selectedProject ? parseInt(selectedProject) : projects[0]?.id;
+    const projectSprints = sprintsData.filter(sprint => sprint.project_id === currentProjectId);
+    
     // Filter based on current selections
     const filteredSprints = selectedSprint === 'all' 
-      ? sprintsData 
-      : sprintsData.filter(s => s.id === parseInt(selectedSprint));
+      ? projectSprints 
+      : projectSprints.filter(s => s.id === parseInt(selectedSprint));
     
     const filteredDevelopers = selectedDeveloper === 'all'
       ? developersData
@@ -218,7 +323,50 @@ export default function DeveloperPerformancePage() {
     (selectedDeveloper === 'all' || p.developerId === parseInt(selectedDeveloper))
   );
 
-  const totalTasksCompleted = filteredPerformance.reduce((sum, p) => sum + p.tasksCompleted, 0);
+  // FIX: Count unique completed tasks instead of summing per developer to avoid double counting
+  const totalTasksCompleted = React.useMemo(() => {
+    if (rawTasksData.length === 0 || rawAssigneesData.length === 0) {
+      return 0;
+    }
+
+    // Get current project ID
+    const currentProjectId = selectedProject ? parseInt(selectedProject) : null;
+    if (!currentProjectId) return 0;
+
+    // Filter sprints by current project
+    const projectSprints = sprints.filter(sprint => sprint.project_id === currentProjectId);
+    const projectSprintIds = projectSprints.map(s => s.id);
+
+    // Get all tasks in the current project
+    const projectTasks = rawTasksData.filter(task => 
+      projectSprintIds.includes(task.sprint_id)
+    );
+
+    // Apply sprint filter if not 'all'
+    let filteredTasks = projectTasks;
+    if (selectedSprint !== 'all') {
+      const sprintId = parseInt(selectedSprint);
+      filteredTasks = projectTasks.filter(task => task.sprint_id === sprintId);
+    }
+
+    // Apply developer filter if not 'all'
+    if (selectedDeveloper !== 'all') {
+      const developerId = parseInt(selectedDeveloper);
+      const developerTaskIds = rawAssigneesData
+        .filter(assignee => assignee.user_id === developerId)
+        .map(assignee => assignee.task_id);
+      
+      filteredTasks = filteredTasks.filter(task => 
+        developerTaskIds.includes(task.id)
+      );
+    }
+
+    // Count unique tasks with real_hours > 0 (our "completed" criteria)
+    const uniqueCompletedTasks = filteredTasks.filter(task => task.real_hours > 0);
+    
+    console.log(`FIXED - Unique completed tasks count: ${uniqueCompletedTasks.length}`);
+    return uniqueCompletedTasks.length;
+  }, [rawTasksData, rawAssigneesData, selectedProject, selectedSprint, selectedDeveloper, sprints]);
   const totalHoursWorked = filteredPerformance.reduce((sum, p) => sum + p.hoursWorked, 0);
 
   const activeDevelopers = selectedDeveloper === 'all' 
@@ -293,10 +441,13 @@ export default function DeveloperPerformancePage() {
           <div className="px-6 space-y-8">
             {/* Filters Component */}
             <PerformanceFilters
+              selectedProject={selectedProject}
               selectedSprint={selectedSprint}
               selectedDeveloper={selectedDeveloper}
+              projects={projects}
               sprints={sprints}
               developers={developers}
+              onProjectChange={setSelectedProject}
               onSprintChange={setSelectedSprint}
               onDeveloperChange={setSelectedDeveloper}
             />

@@ -584,7 +584,7 @@ export default function SprintDetailPage() {
                         </Button>
                       ))}
                       
-                      <Link href={`/reports/sprint/${sprint.id}`} passHref>
+                      <Link href="/reports/sprints" passHref>
                         <Button variant="outline" size="sm" className="w-full justify-start mt-4">
                           <Calendar className="h-4 w-4 mr-2" /> Ver informe
                         </Button>

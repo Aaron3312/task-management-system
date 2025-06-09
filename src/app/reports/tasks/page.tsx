@@ -33,6 +33,7 @@ import { Input } from '@/components/ui/input';
 // Importamos los servicios reales de API
 import { TaskService, ProjectService } from '@/services/api';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { PDFExportService } from '@/utils/pdfExport';
 
 // Tipo extendido para las tareas con metadatos
 type TaskWithMetadata = ITask & {
@@ -164,6 +165,42 @@ export default function TaskReportsPage() {
     return date.toLocaleDateString();
   };
 
+  // Función para exportar PDF
+  const handleExportPDF = () => {
+    try {
+      // Preparar datos para la exportación
+      const tasksForExport = filteredTasks.map(task => ({
+        id: task.id || 0,
+        title: task.title,
+        description: task.description,
+        projectName: task.projectName || 'Sin proyecto',
+        status: task.status,
+        priority: task.priority,
+        dueDate: task.due_date,
+        estimatedHours: task.estimated_hours,
+        realHours: task.real_hours || undefined,
+        efficiency: task.efficiency,
+        daysUntilDue: task.daysUntilDue,
+        isOverdue: task.isOverdue || false
+      }));
+
+      // Generar nombre de archivo con timestamp
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const fileName = `informe-tareas-${timestamp}.pdf`;
+
+      // Exportar PDF
+      PDFExportService.exportTasksReport(
+        tasksForExport,
+        statistics,
+        timeKPIs,
+        fileName
+      );
+    } catch (error) {
+      console.error('Error al exportar PDF:', error);
+      // Aquí podrías agregar un toast de error si lo deseas
+    }
+  };
+
   // Función para obtener etiqueta de estado de la tarea
   const getTaskStatusBadge = (status: TaskStatus) => {
     switch (status) {
@@ -236,6 +273,37 @@ export default function TaskReportsPage() {
 
         // Obtener todas las tareas
         const tasksData = await TaskService.getTasks();
+        console.log('Tareas cargadas:', tasksData.length, 'tareas');
+
+        // Crear un mapa de sprint_id -> project_id para evitar múltiples llamadas API
+        const sprintToProjectMap = new Map<number, number>();
+        
+        // Obtener project_id para cada sprint único
+        const uniqueSprintIds = [...new Set(tasksData.map(task => task.sprint_id).filter(Boolean))];
+        console.log('Sprints únicos:', uniqueSprintIds);
+        
+        for (const sprintId of uniqueSprintIds) {
+          try {
+            // Buscar el sprint en los proyectos cargados
+            let foundProjectId = null;
+            for (const project of projectsData) {
+              if (project.sprints) {
+                const sprint = project.sprints.find(s => s.id === sprintId);
+                if (sprint) {
+                  foundProjectId = project.id;
+                  break;
+                }
+              }
+            }
+            if (foundProjectId) {
+              sprintToProjectMap.set(sprintId, foundProjectId);
+            }
+          } catch (error) {
+            console.error(`Error finding project for sprint ${sprintId}:`, error);
+          }
+        }
+        
+        console.log('Mapa sprint -> proyecto:', sprintToProjectMap);
 
         // Procesar las tareas con metadatos
         const tasksWithMetadata: TaskWithMetadata[] = await Promise.all(
@@ -255,21 +323,21 @@ export default function TaskReportsPage() {
               timeVariance = ((task.real_hours - task.estimated_hours) / task.estimated_hours) * 100;
             }
 
-            // Obtener nombre del proyecto
+            // Obtener project_id y nombre del proyecto a través del sprint
+            let projectId = null;
             let projectName = 'Sin proyecto';
-            if (task.project_id) {
-              try {
-                const project = projectsData.find((p) => p.id === task.project_id);
-                if (project) {
-                  projectName = project.name;
-                }
-              } catch (error) {
-                console.error(`Error fetching project for task ${task.id}:`, error);
+            
+            if (task.sprint_id && sprintToProjectMap.has(task.sprint_id)) {
+              projectId = sprintToProjectMap.get(task.sprint_id);
+              const project = projectsData.find((p) => p.id === projectId);
+              if (project) {
+                projectName = project.name;
               }
             }
 
             return {
               ...task,
+              project_id: projectId, // Agregar el project_id derivado del sprint
               daysUntilDue,
               isOverdue,
               projectName,
@@ -281,6 +349,7 @@ export default function TaskReportsPage() {
 
         setTasks(tasksWithMetadata);
         setFilteredTasks(tasksWithMetadata);
+        
 
         // Calcular estadísticas básicas
         const stats = {
@@ -327,8 +396,11 @@ export default function TaskReportsPage() {
     let filtered = [...tasks];
 
     // Filtrar por proyecto
-    if (selectedProject !== 'all') {
-      filtered = filtered.filter((task) => task.project_id === parseInt(selectedProject));
+    if (selectedProject !== 'all' && selectedProject !== '' && selectedProject !== '0') {
+      const projectId = parseInt(selectedProject);
+      if (!isNaN(projectId)) {
+        filtered = filtered.filter((task) => task.project_id === projectId);
+      }
     }
 
     // Filtrar por estado
@@ -420,8 +492,8 @@ export default function TaskReportsPage() {
               </Link>
               <h1 className="text-2xl font-bold text-foreground">Informe de Tareas</h1>
             </div>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-1" /> Exportar
+            <Button variant="outline" size="sm" onClick={handleExportPDF}>
+              <Download className="h-4 w-4 mr-1" /> Exportar PDF
             </Button>
           </div>
 
@@ -563,7 +635,7 @@ export default function TaskReportsPage() {
               <SelectContent>
                 <SelectItem value="all">Todos los proyectos</SelectItem>
                 {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id?.toString() || ''}>
+                  <SelectItem key={project.id} value={project.id?.toString() || '0'}>
                     {project.name}
                   </SelectItem>
                 ))}

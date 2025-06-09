@@ -40,6 +40,7 @@ import { Input } from '@/components/ui/input';
 // Importamos los servicios reales de API
 import { ProjectService, TaskService, SprintService, ProjectMemberService } from '@/services/api';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { PDFExportService } from '@/utils/pdfExport';
 
 // Tipo extendido para los proyectos con metadatos
 type ProjectWithMetadata = IProject & {
@@ -156,6 +157,41 @@ export default function ProjectReportsPage() {
     return date.toLocaleDateString();
   };
 
+  // Función para exportar PDF
+  const handleExportPDF = () => {
+    try {
+      // Preparar datos para la exportación
+      const projectsForExport = filteredProjects.map(project => ({
+        projectName: project.name,
+        status: project.status.toString(),
+        startDate: project.start_date,
+        endDate: project.end_date,
+        taskCount: project.taskCount || 0,
+        completedTaskCount: project.completedTaskCount || 0,
+        completionRate: project.completionRate || 0,
+        sprintCount: project.sprintCount || 0,
+        memberCount: project.memberCount || 0,
+        riskLevel: project.riskLevel || 'low',
+        daysRemaining: project.daysRemaining,
+        description: project.description
+      }));
+
+      // Generar nombre de archivo con timestamp
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const fileName = `informe-proyectos-${timestamp}.pdf`;
+
+      // Exportar PDF
+      PDFExportService.exportProjectsReport(
+        projectsForExport,
+        projectMetrics,
+        fileName
+      );
+    } catch (error) {
+      console.error('Error al exportar PDF:', error);
+      // Aquí podrías agregar un toast de error si lo deseas
+    }
+  };
+
   // Cargar datos iniciales
   useEffect(() => {
     const fetchData = async () => {
@@ -164,24 +200,20 @@ export default function ProjectReportsPage() {
         // Obtener todos los proyectos
         const projectsData = await ProjectService.getProjects();
 
+        // Obtener todas las tareas una sola vez
+        const allTasks = await TaskService.getTasks();
+
         // Procesar proyectos con metadatos adicionales
         const projectsWithMetadata: ProjectWithMetadata[] = await Promise.all(
           projectsData.map(async (project) => {
-            // Obtener tareas del proyecto
-            let tasks: ITask[] = [];
-            try {
-              tasks = await TaskService.getTasks({ project_id: project.id });
-            } catch (error) {
-              console.error(`Error fetching tasks for project ${project.id}:`, error);
-            }
-
-            // Obtener sprints del proyecto
-            let sprints: ISprint[] = [];
-            try {
-              sprints = await SprintService.getSprints({ project_id: project.id });
-            } catch (error) {
-              console.error(`Error fetching sprints for project ${project.id}:`, error);
-            }
+            // Obtener sprints del proyecto (usar los sprints que ya vienen con el proyecto)
+            const sprints = project.sprints || [];
+            const sprintIds = sprints.map(s => s.id).filter(Boolean);
+            
+            // Obtener tareas del proyecto (filtrar por sprint_id)
+            const tasks = allTasks.filter(task => 
+              task.sprint_id && sprintIds.includes(task.sprint_id)
+            );
 
             // Obtener miembros del proyecto
             let members = [];
@@ -434,8 +466,8 @@ export default function ProjectReportsPage() {
               </Link>
               <h1 className="text-2xl font-bold text-foreground">Informe de Proyectos</h1>
             </div>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-1" /> Exportar
+            <Button variant="outline" size="sm" onClick={handleExportPDF}>
+              <Download className="h-4 w-4 mr-1" /> Exportar PDF
             </Button>
           </div>
 
