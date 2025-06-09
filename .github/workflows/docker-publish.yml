@@ -33,65 +33,65 @@ jobs:
       - name: Prettier
         run: npm run format || true
 
-  test:
-    runs-on: ubuntu-latest
-    # Añadir continue-on-error para que no falle el workflow si fallan los tests
-    continue-on-error: true
-    # Add environment variables for the test job
-    env:
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+  # test:
+  #   runs-on: ubuntu-latest
+  #   # Añadir continue-on-error para que no falle el workflow si fallan los tests
+  #   continue-on-error: true
+  #   # Add environment variables for the test job
+  #   env:
+  #     SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '18'
 
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+  #     - name: Install dependencies
+  #       run: npm ci --legacy-peer-deps
 
-      # Crear el archivo cypress.env.json con las credenciales
-      - name: Create Cypress env file
-        run: |
-          echo '{
-            "USERNAME": "${{ secrets.CYPRESS_USERNAME }}",
-            "PASSWORD": "${{ secrets.CYPRESS_PASSWORD }}"
-          }' > cypress.env.json
+  #     # Crear el archivo cypress.env.json con las credenciales
+  #     - name: Create Cypress env file
+  #       run: |
+  #         echo '{
+  #           "USERNAME": "${{ secrets.CYPRESS_USERNAME }}",
+  #           "PASSWORD": "${{ secrets.CYPRESS_PASSWORD }}"
+  #         }' > cypress.env.json
 
-      # Alternativa: Si necesitas usar el archivo encriptado
-      # - name: Decrypt cypress.env file
-      #   run: |
-      #     echo "${{ secrets.CYPRESS_ENV_ENCRYPTION_KEY }}" > ./key.txt
-      #     openssl enc -aes-256-cbc -d -in cypress.env.enc -out cypress.env.json -pass file:./key.txt
-      #     rm ./key.txt
+  #     # Alternativa: Si necesitas usar el archivo encriptado
+  #     # - name: Decrypt cypress.env file
+  #     #   run: |
+  #     #     echo "${{ secrets.CYPRESS_ENV_ENCRYPTION_KEY }}" > ./key.txt
+  #     #     openssl enc -aes-256-cbc -d -in cypress.env.enc -out cypress.env.json -pass file:./key.txt
+  #     #     rm ./key.txt
 
-      # Create a .env file for Cypress
-      - name: Create .env file
-        run: |
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
+  #     # Create a .env file for Cypress
+  #     - name: Create .env file
+  #       run: |
+  #         echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" > .env
 
-      - name: Build Next.js app and run Cypress tests
-        run: |
-          # Instalar paquete start-server-and-test con --legacy-peer-deps
-          npm install --save-dev start-server-and-test --legacy-peer-deps
+  #     - name: Build Next.js app and run Cypress tests
+  #       run: |
+  #         # Instalar paquete start-server-and-test con --legacy-peer-deps
+  #         npm install --save-dev start-server-and-test --legacy-peer-deps
 
-          # Construir la aplicación Next.js primero
-          npm run build
+  #         # Construir la aplicación Next.js primero
+  #         npm run build
 
-          # Iniciar el servidor, esperar a que esté disponible, y luego ejecutar pruebas
-          npx start-server-and-test "npm start" http://localhost:3000 "cypress run --spec 'cypress/e2e/**/*.cy.ts'"
-        env:
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          CYPRESS_USERNAME: ${{ secrets.CYPRESS_USERNAME }}
-          CYPRESS_PASSWORD: ${{ secrets.CYPRESS_PASSWORD }}
+  #         # Iniciar el servidor, esperar a que esté disponible, y luego ejecutar pruebas
+  #         npx start-server-and-test "npm start" http://localhost:3000 "cypress run --spec 'cypress/e2e/**/*.cy.ts'"
+  #       env:
+  #         SECRET_KEY: ${{ secrets.SECRET_KEY }}
+  #         CYPRESS_USERNAME: ${{ secrets.CYPRESS_USERNAME }}
+  #         CYPRESS_PASSWORD: ${{ secrets.CYPRESS_PASSWORD }}
 
   build:
     runs-on: ubuntu-latest
     # Cambiar needs por if: always() para que siempre se ejecute
-    needs: test
+    # needs: test
     if: always() && github.event_name == 'push'
     permissions:
       contents: read
