@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Target } from 'lucide-react';
-import { ISprint } from '@/core/interfaces/models';
+import { ISprint, IProject } from '@/core/interfaces/models';
 
 interface Developer {
   id: number;
@@ -20,19 +20,25 @@ interface Developer {
 }
 
 interface PerformanceFiltersProps {
+  selectedProject: string;
   selectedSprint: string;
   selectedDeveloper: string;
+  projects: IProject[];
   sprints: ISprint[];
   developers: Developer[];
+  onProjectChange: (value: string) => void;
   onSprintChange: (value: string) => void;
   onDeveloperChange: (value: string) => void;
 }
 
 export const PerformanceFilters: React.FC<PerformanceFiltersProps> = ({
+  selectedProject,
   selectedSprint,
   selectedDeveloper,
+  projects,
   sprints,
   developers,
+  onProjectChange,
   onSprintChange,
   onDeveloperChange
 }) => {
@@ -51,6 +57,19 @@ export const PerformanceFilters: React.FC<PerformanceFiltersProps> = ({
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 ml-auto">
+            <Select value={selectedProject} onValueChange={onProjectChange}>
+              <SelectTrigger className="w-full sm:w-56 h-12 border-2 border-border hover:border-primary/50 transition-all duration-300 bg-background/50">
+                <SelectValue placeholder="Seleccionar Proyecto" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border">
+                {projects.map(project => (
+                  <SelectItem key={project.id} value={project.id!.toString()}>
+                    📁 {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={selectedSprint} onValueChange={onSprintChange}>
               <SelectTrigger className="w-full sm:w-56 h-12 border-2 border-border hover:border-primary/50 transition-all duration-300 bg-background/50">
                 <SelectValue placeholder="Seleccionar Sprint" />

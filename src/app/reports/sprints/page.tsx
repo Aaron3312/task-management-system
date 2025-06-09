@@ -40,6 +40,7 @@ import { Input } from '@/components/ui/input';
 // Importamos los servicios reales de API
 import { SprintService, ProjectService, TaskService } from '@/services/api';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { PDFExportService } from '@/utils/pdfExport';
 
 // Tipo extendido para los sprints con metadatos
 type SprintWithMetadata = ISprint & {
@@ -112,6 +113,43 @@ export default function SprintReportsPage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString();
+  };
+
+  // Función para exportar PDF
+  const handleExportPDF = () => {
+    try {
+      // Preparar datos para la exportación
+      const sprintsForExport = filteredSprints.map(sprint => ({
+        id: sprint.id || 0,
+        name: sprint.name,
+        description: sprint.description,
+        projectName: sprint.projectName || 'Sin proyecto',
+        status: sprint.status,
+        startDate: sprint.start_date,
+        endDate: sprint.end_date,
+        daysRemaining: sprint.daysRemaining,
+        completionRate: sprint.completionRate,
+        taskCount: sprint.taskCount,
+        completedTaskCount: sprint.completedTaskCount,
+        velocity: sprint.velocity,
+        avgTasksPerDay: sprint.avgTasksPerDay,
+        predictedCompletion: sprint.predictedCompletion
+      }));
+
+      // Generar nombre de archivo con timestamp
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const fileName = `informe-sprints-${timestamp}.pdf`;
+
+      // Exportar PDF
+      PDFExportService.exportSprintsReport(
+        sprintsForExport,
+        sprintMetrics,
+        fileName
+      );
+    } catch (error) {
+      console.error('Error al exportar PDF:', error);
+      // Aquí podrías agregar un toast de error si lo deseas
+    }
   };
 
   // Cargar datos iniciales
@@ -368,8 +406,8 @@ export default function SprintReportsPage() {
               </Link>
               <h1 className="text-2xl font-bold text-foreground">Informe de Sprints</h1>
             </div>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-1" /> Exportar
+            <Button variant="outline" size="sm" onClick={handleExportPDF}>
+              <Download className="h-4 w-4 mr-1" /> Exportar PDF
             </Button>
           </div>
 

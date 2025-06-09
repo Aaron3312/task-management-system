@@ -412,9 +412,9 @@ const ProjectDetailsPage = () => {
         total += sprint.tasks.length;
         
         sprint.tasks.forEach(task => {
-          if (task.status === 3) { // Completada
+          if (task.status === 2) { // Completada
             completed++;
-          } else if (task.status === 1 || task.status === 2) { // En progreso
+          } else if (task.status === 1) { // En progreso
             inProgress++;
           } else { // Pendiente
             pending++;
@@ -866,7 +866,7 @@ const ProjectDetailsPage = () => {
             // Calcular estadísticas de tareas para cada sprint
             const taskCount = sprint.tasks ? sprint.tasks.length : 0;
             const completedTaskCount = sprint.tasks ? 
-              sprint.tasks.filter(task => task.status === 3).length : 0; // 3 = COMPLETED
+              sprint.tasks.filter(task => task.status === 2).length : 0; // 2 = COMPLETED
             
             return (
               <SprintCard

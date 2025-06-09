@@ -54,6 +54,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
   totalTasksCompleted,
   totalHoursWorked
 }) => {
+  console.log('PerformanceMetrics - Tareas Completadas displayed:', totalTasksCompleted);
   const metrics = [
     {
       title: "Desarrolladores Activos",
