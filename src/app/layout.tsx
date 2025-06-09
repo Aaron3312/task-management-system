@@ -14,13 +14,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'JAI-VIER - Sistema de Gestión de Tareas',
     description: 'Sistema de gestión de tareas estilo Jira con patrones de diseño en TypeScript. Organiza tu trabajo de manera eficiente.',
-    url: 'https://jai-vier.online',
+    url: 'http://jai-vier.online',
     siteName: 'JAI-VIER',
     images: [
       {
-        url: 'https://jai-vier.online/og-image.jpg', // Necesitas crear esta imagen
-        width: 1200,
-        height: 630,
+        url: 'http://jai-vier.online/favicon.png', // Usando favicon temporalmente
+        width: 512,
+        height: 512,
         alt: 'JAI-VIER - Sistema de Gestión de Tareas',
       },
     ],
@@ -28,17 +28,17 @@ export const metadata: Metadata = {
     type: 'website',
   },
   twitter: {
-    card: 'summary_large_image',
+    card: 'summary',
     title: 'JAI-VIER - Sistema de Gestión de Tareas',
     description: 'Sistema de gestión de tareas estilo Jira con patrones de diseño en TypeScript.',
-    images: ['https://jai-vier.online/og-image.jpg'], // La misma imagen
+    images: ['http://jai-vier.online/favicon.png'],
   },
   icons: {
     icon: '/favicon.png',
     shortcut: '/favicon.png',
     apple: '/favicon.png',
   },
-  metadataBase: new URL('https://jai-vier.online'),
+  metadataBase: new URL('http://jai-vier.online'),
 };
 
 export default function RootLayout({
@@ -48,6 +48,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <head>
+        {/* Fallback metadatos para WhatsApp */}
+        <meta property="og:title" content="JAI-VIER - Sistema de Gestión de Tareas" />
+        <meta property="og:description" content="Sistema de gestión de tareas estilo Jira con patrones de diseño en TypeScript" />
+        <meta property="og:image" content="http://jai-vier.online/favicon.png" />
+        <meta property="og:url" content="http://jai-vier.online" />
+        <meta property="og:type" content="website" />
+      </head>
       <body className={inter.className}>
         <AuthProvider>
           {children}

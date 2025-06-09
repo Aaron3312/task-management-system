@@ -8,27 +8,27 @@ Un sistema completo de gestión de tareas inspirado en Jira, desarrollado con Ne
 
 ### Página de Inicio
 
-![JAI-VIER Página de Inicio](./JaivierInicio.png)
+![JAI-VIER Página de Inicio](./JaivierInicioBlack.png)
 
 ### Gestión de Proyectos
 
-![JAI-VIER Proyectos](./JavierProyects.png)
+![JAI-VIER Proyectos](./JavierProyectsBlack.png)
 
 ### Gestión de Sprints
 
-![JAI-VIER Sprints](./JaivierSprints.png)
+![JAI-VIER Sprints](./JaivierSprintsBlack.png)
 
 ### Gestión de Tareas
 
-![JAI-VIER Tareas](./JaivierTareas.png)
+![JAI-VIER Tareas](./JaivierTareasBlack.png)
 
 ### Detalles de Tareas
 
-![JAI-VIER Detalles de Tareas](./JaivierTareasDetail.png)
+![JAI-VIER Detalles de Tareas](./JaivierTareasDetailBlack.png)
 
 ### Informes y Análisis
 
-![JAI-VIER Informes](./InformesJaivier.png)
+![JAI-VIER Informes](./InformesJaivierBlack.png)
 
 ### Nuestro Equipo
 
