@@ -392,7 +392,80 @@ export default function DeveloperPerformancePage() {
     ? [...new Set(filteredPerformance.map(p => p.sprintId))].length
     : 1;
 
-  // Debug metrics values
+  // Calculate average efficiency for AI analysis
+  const averageEfficiency = filteredPerformance.length > 0
+    ? filteredPerformance.reduce((sum, p) => sum + p.efficiency, 0) / filteredPerformance.length
+    : 0;
+
+  // Calculate additional advanced metrics
+  const advancedMetrics = React.useMemo(() => {
+    if (rawTasksData.length === 0 || !selectedProject) {
+      return {
+        totalTasksAssigned: 0,
+        completionRate: 0,
+        averageHoursPerTask: 0,
+        productivityIndex: 0,
+        totalEstimatedHours: 0,
+        totalRealHours: totalHoursWorked,
+        timeVariance: 0,
+        onTimeDeliveryRate: 0
+      };
+    }
+
+    // Get current project tasks
+    const currentProjectId = parseInt(selectedProject);
+    const projectSprints = sprints.filter(sprint => sprint.project_id === currentProjectId);
+    const projectSprintIds = projectSprints.map(s => s.id);
+    
+    let projectTasks = rawTasksData.filter(task => 
+      projectSprintIds.includes(task.sprint_id)
+    );
+
+    // Apply filters
+    if (selectedSprint !== 'all') {
+      const sprintId = parseInt(selectedSprint);
+      projectTasks = projectTasks.filter(task => task.sprint_id === sprintId);
+    }
+
+    if (selectedDeveloper !== 'all') {
+      const developerId = parseInt(selectedDeveloper);
+      const developerTaskIds = rawAssigneesData
+        .filter(assignee => assignee.user_id === developerId)
+        .map(assignee => assignee.task_id);
+      
+      projectTasks = projectTasks.filter(task => 
+        developerTaskIds.includes(task.id)
+      );
+    }
+
+    // Calculate metrics
+    const totalTasksAssigned = projectTasks.length;
+    const completedTasks = projectTasks.filter(task => task.status === 2);
+    const completionRate = totalTasksAssigned > 0 ? (completedTasks.length / totalTasksAssigned) * 100 : 0;
+    
+    const totalEstimatedHours = projectTasks.reduce((sum, task) => sum + (task.estimated_hours || 0), 0);
+    const totalRealHours = projectTasks.reduce((sum, task) => sum + (task.real_hours || 0), 0);
+    
+    const averageHoursPerTask = totalTasksCompleted > 0 ? totalRealHours / totalTasksCompleted : 0;
+    const productivityIndex = totalEstimatedHours > 0 ? (totalEstimatedHours / totalRealHours) * 100 : 0;
+    const timeVariance = totalEstimatedHours > 0 ? ((totalRealHours - totalEstimatedHours) / totalEstimatedHours) * 100 : 0;
+    
+    // Calculate on-time delivery (tasks completed vs assigned)
+    const onTimeDeliveryRate = completionRate;
+
+    return {
+      totalTasksAssigned,
+      completionRate,
+      averageHoursPerTask,
+      productivityIndex,
+      totalEstimatedHours,
+      totalRealHours,
+      timeVariance,
+      onTimeDeliveryRate
+    };
+  }, [rawTasksData, rawAssigneesData, selectedProject, selectedSprint, selectedDeveloper, sprints, totalTasksCompleted, totalHoursWorked]);
+
+  // Debug metrics values (after advancedMetrics is calculated)
   console.log('=== METRICS DEBUG ===');
   console.log('Current filters - Project:', selectedProject, 'Sprint:', selectedSprint, 'Developer:', selectedDeveloper);
   console.log('activeDevelopers:', activeDevelopers);
@@ -400,12 +473,8 @@ export default function DeveloperPerformancePage() {
   console.log('totalTasksCompleted:', totalTasksCompleted);
   console.log('totalTasks:', totalTasks);
   console.log('totalHoursWorked:', totalHoursWorked);
+  console.log('advancedMetrics:', advancedMetrics);
   console.log('===================');
-
-  // Calculate average efficiency for AI analysis
-  const averageEfficiency = filteredPerformance.length > 0
-    ? filteredPerformance.reduce((sum, p) => sum + p.efficiency, 0) / filteredPerformance.length
-    : 0;
 
   const handleExport = async () => {
     if (isExporting) return;
@@ -432,7 +501,13 @@ export default function DeveloperPerformancePage() {
         totalHoursWorked,
         activeDevelopers,
         activeSprints,
-        sprints // Add sprints data for real date ranges
+        sprints, // Add sprints data for real date ranges
+        // Add advanced metrics
+        advancedMetrics: {
+          ...advancedMetrics,
+          totalTasks, // Add total tasks count
+          averageEfficiency
+        }
       };
 
       // Create PDF exporter and generate report with AI
@@ -483,6 +558,7 @@ export default function DeveloperPerformancePage() {
               activeSprints={activeSprints}
               totalTasksCompleted={totalTasksCompleted}
               totalHoursWorked={totalHoursWorked}
+              advancedMetrics={advancedMetrics}
             />
 
             {/* Loading or Charts */}

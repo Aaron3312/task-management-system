@@ -824,6 +824,18 @@ interface PerformanceReportData {
   activeDevelopers: number;
   activeSprints: number;
   sprints: any[];
+  advancedMetrics?: {
+    totalTasksAssigned: number;
+    completionRate: number;
+    averageHoursPerTask: number;
+    productivityIndex: number;
+    totalEstimatedHours: number;
+    totalRealHours: number;
+    timeVariance: number;
+    onTimeDeliveryRate: number;
+    totalTasks: number;
+    averageEfficiency: number;
+  };
 }
 
 export class PerformancePDFExporter {
@@ -875,7 +887,7 @@ export class PerformancePDFExporter {
     doc.setFontSize(10);
     doc.setTextColor(60, 60, 60);
     
-    const metricsText = [
+    const basicMetricsText = [
       `• Desarrolladores activos: ${data.activeDevelopers}`,
       `• Sprints analizados: ${data.activeSprints}`,
       `• Tareas completadas: ${data.totalTasksCompleted}`,
@@ -883,17 +895,54 @@ export class PerformancePDFExporter {
       `• Promedio de horas por desarrollador: ${data.activeDevelopers > 0 ? Math.round(data.totalHoursWorked / data.activeDevelopers) : 0}h`,
       `• Promedio de tareas por desarrollador: ${data.activeDevelopers > 0 ? Math.round(data.totalTasksCompleted / data.activeDevelopers) : 0}`
     ];
+
+    const advancedMetricsText = data.advancedMetrics ? [
+      `• Tareas totales asignadas: ${data.advancedMetrics.totalTasks}`,
+      `• Tasa de completación: ${data.advancedMetrics.completionRate.toFixed(1)}%`,
+      `• Índice de productividad: ${data.advancedMetrics.productivityIndex.toFixed(1)}%`,
+      `• Promedio horas por tarea: ${data.advancedMetrics.averageHoursPerTask.toFixed(1)}h`,
+      `• Variación de tiempo: ${data.advancedMetrics.timeVariance > 0 ? '+' : ''}${data.advancedMetrics.timeVariance.toFixed(1)}%`,
+      `• Eficiencia promedio del equipo: ${data.advancedMetrics.averageEfficiency.toFixed(1)}%`,
+      `• Horas estimadas totales: ${Math.round(data.advancedMetrics.totalEstimatedHours)}h`,
+      `• Horas reales totales: ${Math.round(data.advancedMetrics.totalRealHours)}h`
+    ] : [];
+
+    const allMetricsText = [...basicMetricsText, ...advancedMetricsText];
     
-    metricsText.forEach((text, index) => {
+    allMetricsText.forEach((text, index) => {
       doc.text(text, 25, yPosition + (index * 6));
     });
     
-    yPosition += (metricsText.length * 6) + 15;
+    yPosition += (allMetricsText.length * 6) + 15;
     
     // Verificar si necesitamos una nueva página
     if (yPosition > pageHeight - 100) {
       doc.addPage();
       yPosition = 20;
+    }
+
+    // Agregar sección de KPIs de calidad si hay métricas avanzadas
+    if (data.advancedMetrics) {
+      doc.setFontSize(14);
+      doc.setTextColor(40, 40, 40);
+      doc.text('KPIs de Calidad y Productividad', 20, yPosition);
+      
+      yPosition += 10;
+      doc.setFontSize(10);
+      doc.setTextColor(60, 60, 60);
+      
+      const qualityInsights = [
+        `Análisis de Eficiencia: ${data.advancedMetrics.averageEfficiency >= 80 ? 'Excelente' : data.advancedMetrics.averageEfficiency >= 60 ? 'Buena' : 'Necesita Mejora'}`,
+        `Precisión de Estimaciones: ${Math.abs(data.advancedMetrics.timeVariance) <= 10 ? 'Alta precisión' : Math.abs(data.advancedMetrics.timeVariance) <= 25 ? 'Precisión moderada' : 'Baja precisión'}`,
+        `Productividad del Equipo: ${data.advancedMetrics.productivityIndex >= 100 ? 'Por encima de lo esperado' : data.advancedMetrics.productivityIndex >= 80 ? 'Dentro del rango esperado' : 'Por debajo de lo esperado'}`,
+        `Tasa de Éxito: ${data.advancedMetrics.completionRate >= 95 ? 'Excelente' : data.advancedMetrics.completionRate >= 80 ? 'Buena' : 'Necesita atención'}`
+      ];
+      
+      qualityInsights.forEach((insight, index) => {
+        doc.text(`• ${insight}`, 25, yPosition + (index * 6));
+      });
+      
+      yPosition += (qualityInsights.length * 6) + 15;
     }
     
     // Tabla de rendimiento por desarrollador

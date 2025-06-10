@@ -10,6 +10,16 @@ interface PerformanceMetricsProps {
   activeSprints: number;
   totalTasksCompleted: number;
   totalHoursWorked: number;
+  advancedMetrics?: {
+    totalTasksAssigned: number;
+    completionRate: number;
+    averageHoursPerTask: number;
+    productivityIndex: number;
+    totalEstimatedHours: number;
+    totalRealHours: number;
+    timeVariance: number;
+    onTimeDeliveryRate: number;
+  };
 }
 
 interface MetricCardProps {
@@ -52,10 +62,12 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
   activeDevelopers,
   activeSprints,
   totalTasksCompleted,
-  totalHoursWorked
+  totalHoursWorked,
+  advancedMetrics
 }) => {
   console.log('PerformanceMetrics - Tareas Completadas displayed:', totalTasksCompleted);
-  const metrics = [
+  
+  const basicMetrics = [
     {
       title: "Desarrolladores Activos",
       value: activeDevelopers,
@@ -90,11 +102,73 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
     }
   ];
 
+  const advancedMetricsCards = advancedMetrics ? [
+    {
+      title: "Tasa de Completación",
+      value: `${advancedMetrics.completionRate.toFixed(1)}%`,
+      subtitle: `${totalTasksCompleted}/${advancedMetrics.totalTasksAssigned} tareas`,
+      icon: <TrendingUp />,
+      gradient: "bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700",
+      iconBg: "text-green-100"
+    },
+    {
+      title: "Índice de Productividad",
+      value: `${advancedMetrics.productivityIndex.toFixed(1)}%`,
+      subtitle: "Estimado vs Real",
+      icon: <Award />,
+      gradient: "bg-gradient-to-br from-indigo-500 to-indigo-600 dark:from-indigo-600 dark:to-indigo-700",
+      iconBg: "text-indigo-100"
+    },
+    {
+      title: "Promedio Horas/Tarea",
+      value: `${advancedMetrics.averageHoursPerTask.toFixed(1)}h`,
+      subtitle: "Por tarea completada",
+      icon: <Zap />,
+      gradient: "bg-gradient-to-br from-pink-500 to-pink-600 dark:from-pink-600 dark:to-pink-700",
+      iconBg: "text-pink-100"
+    },
+    {
+      title: "Variación de Tiempo",
+      value: `${advancedMetrics.timeVariance > 0 ? '+' : ''}${advancedMetrics.timeVariance.toFixed(1)}%`,
+      subtitle: "vs Estimación",
+      icon: <TrendingUp />,
+      gradient: advancedMetrics.timeVariance > 10 
+        ? "bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700"
+        : advancedMetrics.timeVariance < -10
+        ? "bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700"
+        : "bg-gradient-to-br from-yellow-500 to-yellow-600 dark:from-yellow-600 dark:to-yellow-700",
+      iconBg: advancedMetrics.timeVariance > 10 
+        ? "text-red-100"
+        : advancedMetrics.timeVariance < -10
+        ? "text-green-100"
+        : "text-yellow-100"
+    }
+  ] : [];
+
+  const allMetrics = [...basicMetrics, ...advancedMetricsCards];
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {metrics.map((metric, index) => (
-        <MetricCard key={index} {...metric} />
-      ))}
+    <div className="space-y-6">
+      {/* Basic Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {basicMetrics.map((metric, index) => (
+          <MetricCard key={index} {...metric} />
+        ))}
+      </div>
+      
+      {/* Advanced Metrics */}
+      {advancedMetrics && advancedMetricsCards.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
+            Métricas Avanzadas
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {advancedMetricsCards.map((metric, index) => (
+              <MetricCard key={`advanced-${index}`} {...metric} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
