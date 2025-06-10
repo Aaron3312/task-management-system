@@ -175,15 +175,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     // Verificar que tengamos la API key de Gemini
     if (!genAI) {
-      console.error(`❌ GEMINI_API_KEY not configured`);
-      return res.status(500).json({
-        success: false,
-        insights: [],
-        summary: 'Análisis IA no disponible: API key de Gemini no configurada',
-        error: 'GEMINI_API_KEY not configured',
+      console.error(`❌ GEMINI_API_KEY not configured in production environment`);
+      
+      // Proporcionar análisis básico como fallback
+      const activePerformanceData = filterActiveDevelopers(req.body.performanceData || []);
+      const activeDevelopers = [...new Set(activePerformanceData.map((p: any) => p.developerId))];
+      
+      return res.status(200).json({
+        success: true,
+        insights: [
+          {
+            category: 'general',
+            severity: 'medium',
+            title: 'Análisis IA no disponible',
+            description: 'El análisis con IA no está disponible en este momento debido a la configuración del servidor.',
+            recommendation: 'Contacte al administrador para configurar GEMINI_API_KEY en el entorno de producción.'
+          },
+          {
+            category: 'performance',
+            severity: 'low',
+            title: 'Resumen básico disponible',
+            description: `Se encontraron ${activeDevelopers.length} desarrolladores activos con datos de rendimiento.`,
+            recommendation: 'Los datos básicos están funcionando correctamente. Solo falta la integración con IA.'
+          }
+        ],
+        summary: `Análisis básico: ${activeDevelopers.length} desarrolladores activos encontrados. La funcionalidad de análisis IA requiere configuración adicional en el servidor.`,
         metadata: {
-          activeDevelopers: 0,
-          totalDevelopers: 0,
+          activeDevelopers: activeDevelopers.length,
+          totalDevelopers: req.body.developers?.length || 0,
           normalizedEfficiency: false,
           analysisTimestamp: timestamp
         }
