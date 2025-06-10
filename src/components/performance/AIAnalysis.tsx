@@ -153,7 +153,24 @@ export const AIAnalysis: React.FC<AIAnalysisProps> = ({
     } catch (error) {
       console.error('Analysis error:', error);
       toast.dismiss();
-      toast.error('Error al realizar el análisis');
+      
+      // Mostrar error más específico
+      if (error instanceof Error) {
+        if (error.message.includes('500')) {
+          toast.error('Error del servidor en análisis IA. Verifique la configuración de Gemini API.');
+        } else if (error.message.includes('401')) {
+          toast.error('Error de autenticación en análisis IA.');
+        } else {
+          toast.error(`Error en análisis IA: ${error.message}`);
+        }
+      } else {
+        toast.error('Error al realizar el análisis IA');
+      }
+      
+      // Mostrar mensaje de error en el componente
+      setInsights([]);
+      setSummary('Error al obtener análisis IA. La funcionalidad básica sigue disponible.');
+      setHasAnalyzed(true);
     } finally {
       setIsAnalyzing(false);
     }

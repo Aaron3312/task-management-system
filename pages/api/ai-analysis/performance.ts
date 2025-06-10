@@ -2,7 +2,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'demo-key');
+// Verificar la API key de Gemini
+const apiKey = process.env.GEMINI_API_KEY;
+console.log('🔑 GEMINI_API_KEY status:', apiKey ? `Available (${apiKey.substring(0, 10)}...)` : 'NOT FOUND');
+
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 
 
@@ -96,12 +100,12 @@ function formatAnalysisPrompt(data: any): string {
     : 0;
 
   return `
-Eres un experto en análisis de proyectos de desarrollo de software. Analiza los siguientes datos de rendimiento de DESARROLLADORES ACTIVOS únicamente.
+Analiza el rendimiento del equipo de desarrollo basado en los datos proporcionados.
 
-IMPORTANTE: 
-- Los datos de eficiencia ya están NORMALIZADOS (0-100%), donde 100% representa al desarrollador más eficiente
-- Solo analiza desarrolladores que tienen tareas asignadas o trabajo realizado
-- Excluye a desarrolladores inactivos del análisis principal
+CONTEXTO: 
+- Datos de eficiencia normalizados (0-100%)
+- Solo incluye desarrolladores activos con trabajo realizado
+- Excluye desarrolladores inactivos
 
 DATOS DEL PROYECTO (SOLO DESARROLLADORES ACTIVOS):
 - Desarrolladores activos: ${activeDevelopers.length}
@@ -113,9 +117,9 @@ DATOS DEL PROYECTO (SOLO DESARROLLADORES ACTIVOS):
 - Tasa de completación: ${(metrics?.totalTasks || 0) > 0 ? (((metrics?.totalTasksCompleted || 0) / (metrics?.totalTasks || 1)) * 100).toFixed(1) : 0}%
 - Eficiencia promedio normalizada: ${activeAvgEfficiency.toFixed(1)}%
 
-DESARROLLADORES ACTIVOS (Eficiencia Normalizada 0-100%):
-${normalizedData.slice(0, 15).map((dev: any) => 
-  `- ${dev.developerName}: ${(dev.hoursWorked || 0).toFixed(1)}h, ${dev.tasksCompleted || 0} tareas completadas, ${dev.tasksAssigned || 0} asignadas, ${(dev.efficiency || 0).toFixed(1)}% eficiencia normalizada`
+DESARROLLADORES ACTIVOS (Top 10):
+${normalizedData.slice(0, 10).map((dev: any) => 
+  `- ${dev.developerName}: ${dev.tasksCompleted || 0} tareas, ${(dev.efficiency || 0).toFixed(0)}% eficiencia`
 ).join('\n')}
 
 ${inactiveDevelopers.length > 0 ? `
@@ -130,34 +134,25 @@ ${sprints.map((sprint: any) =>
 ).join('\n')}
 
 ANÁLISIS REQUERIDO:
-1. Evalúa el rendimiento SOLO de desarrolladores activos (con tareas asignadas)
-2. Analiza la eficiencia normalizada (0-100%) donde 100% es el mejor desempeño relativo
-3. Identifica patrones en la distribución de trabajo entre desarrolladores activos
-4. Evalúa la tasa de completación de tareas y calidad del trabajo
-5. Si hay desarrolladores inactivos, menciona brevemente la necesidad de revisión de asignaciones
-6. Proporciona recomendaciones específicas para mejorar el rendimiento del equipo activo
+1. Evalúa el rendimiento de desarrolladores activos
+2. Identifica patrones en eficiencia y distribución de trabajo
+3. Proporciona 2-3 recomendaciones específicas para mejorar el rendimiento
 
-NOTAS IMPORTANTES:
-- La eficiencia está normalizada: 100% = mejor desarrollador, otros son relativos a este
-- No critiques a desarrolladores inactivos, enfócate en optimizar a los activos
-- Considera la carga de trabajo balanceada entre desarrolladores activos
-
-FORMATO DE RESPUESTA (JSON):
+RESPONDE EN FORMATO JSON:
 {
   "insights": [
     {
-      "category": "performance|efficiency|workload|sprint|general",
-      "severity": "low|medium|high",
-      "title": "Título del insight",
-      "description": "Descripción detallada del hallazgo sobre desarrolladores activos",
-      "recommendation": "Recomendación específica para mejorar",
-      "data_points": ["punto de datos relevante"]
+      "category": "performance",
+      "severity": "medium",
+      "title": "Título breve",
+      "description": "Descripción del hallazgo",
+      "recommendation": "Recomendación específica"
     }
   ],
-  "summary": "Resumen ejecutivo enfocado en desarrolladores activos y su rendimiento normalizado"
+  "summary": "Breve resumen ejecutivo"
 }
 
-Responde SOLO con el JSON, sin texto adicional.
+Solo responde con JSON válido.
 `;
 }
 
@@ -177,6 +172,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     console.log(`✅ Request authenticated`);
+    
+    // Verificar que tengamos la API key de Gemini
+    if (!genAI) {
+      console.error(`❌ GEMINI_API_KEY not configured`);
+      return res.status(500).json({
+        success: false,
+        insights: [],
+        summary: 'Análisis IA no disponible: API key de Gemini no configurada',
+        error: 'GEMINI_API_KEY not configured',
+        metadata: {
+          activeDevelopers: 0,
+          totalDevelopers: 0,
+          normalizedEfficiency: false,
+          analysisTimestamp: timestamp
+        }
+      });
+    }
     
     // Debug del cuerpo de la petición
     console.log(`📊 Request body structure:`);
@@ -205,21 +217,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       performanceData: normalizedData
     };
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    const prompt = formatAnalysisPrompt(processedData);
+    let model, prompt;
     
-    console.log(`\n🤖 PROMPT ENVIADO A GEMINI:`);
-    console.log(`===========================`);
-    console.log(prompt);
-    console.log(`===========================`);
-    console.log(`📏 Prompt length: ${prompt.length} characters`);
+    try {
+      model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      prompt = formatAnalysisPrompt(processedData);
+      
+      console.log(`\n🤖 PROMPT ENVIADO A GEMINI:`);
+      console.log(`===========================`);
+      console.log(prompt.substring(0, 500) + '...[truncated]'); // Solo mostrar primeros 500 chars
+      console.log(`===========================`);
+      console.log(`📏 Prompt length: ${prompt.length} characters`);
+    } catch (modelError) {
+      console.error(`❌ Error creating model or prompt:`, modelError);
+      throw new Error(`Failed to initialize Gemini model: ${modelError instanceof Error ? modelError.message : 'Unknown error'}`);
+    }
     
     console.log(`\n🔄 Sending request to Gemini...`);
     const startTime = Date.now();
     
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    let result, response, text;
+    try {
+      // Agregar timeout de 30 segundos
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Gemini API timeout (30s)')), 30000)
+      );
+      
+      const geminiPromise = model.generateContent(prompt);
+      
+      result = await Promise.race([geminiPromise, timeoutPromise]);
+      response = await result.response;
+      text = response.text();
+      
+      if (!text || text.trim().length === 0) {
+        throw new Error('Empty response from Gemini API');
+      }
+      
+    } catch (geminiError) {
+      console.error(`❌ Gemini API Error:`, geminiError);
+      
+      // Proporcionar información más específica del error
+      let errorMessage = 'Unknown Gemini API error';
+      if (geminiError instanceof Error) {
+        if (geminiError.message.includes('timeout')) {
+          errorMessage = 'Gemini API timeout - try again';
+        } else if (geminiError.message.includes('quota')) {
+          errorMessage = 'Gemini API quota exceeded';
+        } else if (geminiError.message.includes('invalid')) {
+          errorMessage = 'Invalid request to Gemini API';
+        } else {
+          errorMessage = geminiError.message;
+        }
+      }
+      
+      throw new Error(`Gemini API failed: ${errorMessage}`);
+    }
     
     const endTime = Date.now();
     console.log(`✅ Gemini response received in ${endTime - startTime}ms`);

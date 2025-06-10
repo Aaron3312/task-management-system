@@ -1054,6 +1054,14 @@ export class PerformancePDFExporter {
       await this.addAIAnalysis(doc, data, yPosition);
     } catch (error) {
       console.log('No se pudo agregar análisis IA:', error);
+      
+      // Agregar nota sobre el análisis IA no disponible
+      const pageHeight = doc.internal.pageSize.height;
+      if (yPosition < pageHeight - 40) {
+        doc.setFontSize(12);
+        doc.setTextColor(180, 180, 180);
+        doc.text('Análisis IA no disponible en este momento', 20, yPosition + 10);
+      }
     }
     
     // Descargar el PDF
