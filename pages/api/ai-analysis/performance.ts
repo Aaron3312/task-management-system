@@ -108,9 +108,9 @@ DATOS DEL PROYECTO (SOLO DESARROLLADORES ACTIVOS):
 - Desarrolladores inactivos (excluidos del análisis): ${inactiveDevelopers.length}
 - Sprints analizados: ${sprints.length}
 - Horas totales trabajadas: ${activeTotalHours.toFixed(1)}h
-- Tareas totales: ${metrics.totalTasks || 0}
-- Tareas completadas: ${metrics.totalTasksCompleted || 0}
-- Tasa de completación: ${metrics.totalTasks > 0 ? ((metrics.totalTasksCompleted / metrics.totalTasks) * 100).toFixed(1) : 0}%
+- Tareas totales: ${metrics?.totalTasks || 0}
+- Tareas completadas: ${metrics?.totalTasksCompleted || 0}
+- Tasa de completación: ${(metrics?.totalTasks || 0) > 0 ? (((metrics?.totalTasksCompleted || 0) / (metrics?.totalTasks || 1)) * 100).toFixed(1) : 0}%
 - Eficiencia promedio normalizada: ${activeAvgEfficiency.toFixed(1)}%
 
 DESARROLLADORES ACTIVOS (Eficiencia Normalizada 0-100%):
@@ -177,6 +177,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     console.log(`✅ Request authenticated`);
+    
+    // Debug del cuerpo de la petición
+    console.log(`📊 Request body structure:`);
+    console.log(`📊 performanceData length:`, req.body.performanceData?.length || 0);
+    console.log(`📊 developers length:`, req.body.developers?.length || 0);
+    console.log(`📊 sprints length:`, req.body.sprints?.length || 0);
+    console.log(`📊 metrics:`, req.body.metrics);
+    
+    // Validar que tenemos los datos necesarios
+    if (!req.body.performanceData || !req.body.developers || !req.body.sprints) {
+      throw new Error('Missing required data: performanceData, developers, or sprints');
+    }
     
     // Filtrar y normalizar datos antes del análisis
     const activePerformanceData = filterActiveDevelopers(req.body.performanceData || []);
