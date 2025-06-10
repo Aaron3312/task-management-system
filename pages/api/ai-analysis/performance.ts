@@ -3,7 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Verificar la API key de Gemini
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = "AIzaSyDdfbfnH3P-Z3JR12WN5ysRmnXMR-wY6jc"
 console.log('🔑 GEMINI_API_KEY status:', apiKey ? `Available (${apiKey.substring(0, 10)}...)` : 'NOT FOUND');
 
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
