@@ -13,6 +13,7 @@ interface AIAnalysisProps {
   developers: any[];
   totalHours: number;
   totalTasks: number;
+  totalTasksCompleted: number;
   averageEfficiency: number;
 }
 
@@ -68,6 +69,7 @@ class AIAnalysisService {
     metrics: {
       totalHours: number;
       totalTasks: number;
+      totalTasksCompleted: number;
       efficiency: number;
     };
   }): Promise<AIAnalysisResult> {
@@ -100,6 +102,7 @@ export const AIAnalysis: React.FC<AIAnalysisProps> = ({
   developers,
   totalHours,
   totalTasks,
+  totalTasksCompleted,
   averageEfficiency
 }) => {
   const [insights, setInsights] = useState<AIInsight[]>([]);
@@ -130,6 +133,7 @@ export const AIAnalysis: React.FC<AIAnalysisProps> = ({
         metrics: {
           totalHours,
           totalTasks,
+          totalTasksCompleted,
           efficiency: averageEfficiency
         }
       };

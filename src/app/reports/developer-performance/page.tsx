@@ -159,17 +159,18 @@ export default function DeveloperPerformancePage() {
         );
 
         const assignedTasks = developerAssignments.map((a: any) => a.task).filter(Boolean);
-        const completedTasks = assignedTasks.filter((task: any) => task.real_hours > 0);
+        const completedTasks = assignedTasks.filter((task: any) => task.status === 2);
+        const tasksWithHours = assignedTasks.filter((task: any) => task.real_hours > 0);
 
-        // Calculate total hours worked
-        const hoursWorked = completedTasks.reduce((sum: number, task: any) => {
+        // Calculate total hours worked (only tasks with recorded hours)
+        const hoursWorked = tasksWithHours.reduce((sum: number, task: any) => {
           const taskAssignees = assigneesData.filter((a: any) => a.task_id === task.id);
           const assigneeCount = taskAssignees.length || 1;
           return sum + ((task.real_hours || 0) / assigneeCount);
         }, 0);
 
-        // Calculate efficiency
-        const totalEstimated = completedTasks.reduce((sum: number, task: any) => 
+        // Calculate efficiency (based on tasks with hours worked)
+        const totalEstimated = tasksWithHours.reduce((sum: number, task: any) => 
           sum + task.estimated_hours, 0
         );
         
@@ -323,15 +324,15 @@ export default function DeveloperPerformancePage() {
     (selectedDeveloper === 'all' || p.developerId === parseInt(selectedDeveloper))
   );
 
-  // FIX: Count unique completed tasks instead of summing per developer to avoid double counting
-  const totalTasksCompleted = React.useMemo(() => {
+  // Calculate total tasks and completed tasks separately 
+  const { totalTasks, totalTasksCompleted } = React.useMemo(() => {
     if (rawTasksData.length === 0 || rawAssigneesData.length === 0) {
-      return 0;
+      return { totalTasks: 0, totalTasksCompleted: 0 };
     }
 
     // Get current project ID
     const currentProjectId = selectedProject ? parseInt(selectedProject) : null;
-    if (!currentProjectId) return 0;
+    if (!currentProjectId) return { totalTasks: 0, totalTasksCompleted: 0 };
 
     // Filter sprints by current project
     const projectSprints = sprints.filter(sprint => sprint.project_id === currentProjectId);
@@ -361,21 +362,45 @@ export default function DeveloperPerformancePage() {
       );
     }
 
-    // Count unique tasks with real_hours > 0 (our "completed" criteria)
-    const uniqueCompletedTasks = filteredTasks.filter(task => task.real_hours > 0);
+    // Count total tasks and completed tasks
+    const totalTasksCount = filteredTasks.length;
+    const completedTasksCount = filteredTasks.filter(task => task.status === 2).length;
     
-    console.log(`FIXED - Unique completed tasks count: ${uniqueCompletedTasks.length}`);
-    return uniqueCompletedTasks.length;
+    console.log('=== TASK COUNTING DEBUG ===');
+    console.log('Project ID:', currentProjectId);
+    console.log('Project sprints:', projectSprintIds);
+    console.log('All project tasks:', projectTasks.length);
+    console.log('After sprint filter:', filteredTasks.length);
+    console.log('Selected sprint:', selectedSprint);
+    console.log('Selected developer:', selectedDeveloper);
+    console.log('Tasks with status === 2 (COMPLETED):', completedTasksCount);
+    console.log('Sample completed tasks:', filteredTasks.filter(task => task.status === 2).slice(0, 5).map(t => ({id: t.id, status: t.status, real_hours: t.real_hours, sprint_id: t.sprint_id})));
+    console.log(`Task metrics - Total: ${totalTasksCount}, Completed: ${completedTasksCount}, Rate: ${totalTasksCount > 0 ? (completedTasksCount/totalTasksCount*100).toFixed(1) : 0}%`);
+    console.log('=========================');
+    return { 
+      totalTasks: totalTasksCount, 
+      totalTasksCompleted: completedTasksCount 
+    };
   }, [rawTasksData, rawAssigneesData, selectedProject, selectedSprint, selectedDeveloper, sprints]);
   const totalHoursWorked = filteredPerformance.reduce((sum, p) => sum + p.hoursWorked, 0);
 
   const activeDevelopers = selectedDeveloper === 'all' 
-    ? [...new Set(filteredPerformance.map(p => p.developerId))].length
+    ? [...new Set(filteredPerformance.filter(p => p.hoursWorked > 0 || p.tasksCompleted > 0).map(p => p.developerId))].length
     : 1;
 
   const activeSprints = selectedSprint === 'all'
     ? [...new Set(filteredPerformance.map(p => p.sprintId))].length
     : 1;
+
+  // Debug metrics values
+  console.log('=== METRICS DEBUG ===');
+  console.log('Current filters - Project:', selectedProject, 'Sprint:', selectedSprint, 'Developer:', selectedDeveloper);
+  console.log('activeDevelopers:', activeDevelopers);
+  console.log('activeSprints:', activeSprints);
+  console.log('totalTasksCompleted:', totalTasksCompleted);
+  console.log('totalTasks:', totalTasks);
+  console.log('totalHoursWorked:', totalHoursWorked);
+  console.log('===================');
 
   // Calculate average efficiency for AI analysis
   const averageEfficiency = filteredPerformance.length > 0
@@ -483,7 +508,8 @@ export default function DeveloperPerformancePage() {
                   sprints={sprints}
                   developers={developers}
                   totalHours={totalHoursWorked}
-                  totalTasks={totalTasksCompleted}
+                  totalTasks={totalTasks}
+                  totalTasksCompleted={totalTasksCompleted}
                   averageEfficiency={averageEfficiency}
                 />
               </>

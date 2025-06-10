@@ -809,3 +809,363 @@ export class PDFExportService {
     doc.save(fileName);
   }
 }
+
+// Performance report interfaces
+interface PerformanceReportData {
+  performanceData: any[];
+  totalHoursPerSprintData: any[];
+  hoursWorkedChartData: any[];
+  tasksCompletedChartData: any[];
+  developers: any[];
+  selectedSprint: string;
+  selectedDeveloper: string;
+  totalTasksCompleted: number;
+  totalHoursWorked: number;
+  activeDevelopers: number;
+  activeSprints: number;
+  sprints: any[];
+}
+
+export class PerformancePDFExporter {
+  async exportPerformanceReport(data: PerformanceReportData): Promise<void> {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+    
+    // Configurar fuentes
+    doc.setFont('helvetica');
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Informe de Rendimiento de Desarrolladores', pageWidth / 2, 25, { align: 'center' });
+    
+    // Fecha de generación
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    const currentDate = new Date().toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    doc.text(`Generado el: ${currentDate}`, pageWidth / 2, 35, { align: 'center' });
+    
+    // Filtros aplicados
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    let filtersText = `Filtros aplicados: Proyecto seleccionado`;
+    if (data.selectedSprint !== 'all') {
+      filtersText += `, Sprint específico`;
+    }
+    if (data.selectedDeveloper !== 'all') {
+      filtersText += `, Desarrollador específico`;
+    }
+    doc.text(filtersText, pageWidth / 2, 42, { align: 'center' });
+    
+    // Métricas generales
+    let yPosition = 55;
+    
+    doc.setFontSize(14);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Resumen Ejecutivo', 20, yPosition);
+    
+    yPosition += 10;
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    
+    const metricsText = [
+      `• Desarrolladores activos: ${data.activeDevelopers}`,
+      `• Sprints analizados: ${data.activeSprints}`,
+      `• Tareas completadas: ${data.totalTasksCompleted}`,
+      `• Horas trabajadas: ${Math.round(data.totalHoursWorked)}h`,
+      `• Promedio de horas por desarrollador: ${data.activeDevelopers > 0 ? Math.round(data.totalHoursWorked / data.activeDevelopers) : 0}h`,
+      `• Promedio de tareas por desarrollador: ${data.activeDevelopers > 0 ? Math.round(data.totalTasksCompleted / data.activeDevelopers) : 0}`
+    ];
+    
+    metricsText.forEach((text, index) => {
+      doc.text(text, 25, yPosition + (index * 6));
+    });
+    
+    yPosition += (metricsText.length * 6) + 15;
+    
+    // Verificar si necesitamos una nueva página
+    if (yPosition > pageHeight - 100) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    // Tabla de rendimiento por desarrollador
+    doc.setFontSize(14);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Rendimiento por Desarrollador', 20, yPosition);
+    
+    yPosition += 10;
+    
+    // Agrupar datos de performance por desarrollador
+    const developerSummary = new Map();
+    data.performanceData.forEach(perf => {
+      if (!developerSummary.has(perf.developerId)) {
+        developerSummary.set(perf.developerId, {
+          name: perf.developerName,
+          totalHours: 0,
+          totalCompleted: 0,
+          totalAssigned: 0,
+          sprints: 0,
+          avgEfficiency: 0
+        });
+      }
+      
+      const summary = developerSummary.get(perf.developerId);
+      summary.totalHours += perf.hoursWorked || 0;
+      summary.totalCompleted += perf.tasksCompleted || 0;
+      summary.totalAssigned += perf.tasksAssigned || 0;
+      summary.sprints += 1;
+      summary.avgEfficiency += perf.efficiency || 0;
+    });
+    
+    // Calcular promedios
+    developerSummary.forEach(summary => {
+      summary.avgEfficiency = summary.sprints > 0 ? summary.avgEfficiency / summary.sprints : 0;
+      summary.completionRate = summary.totalAssigned > 0 ? (summary.totalCompleted / summary.totalAssigned) * 100 : 0;
+    });
+    
+    // Filtrar solo desarrolladores activos
+    const activeDeveloperSummaries = Array.from(developerSummary.values())
+      .filter(summary => summary.totalHours > 0 || summary.totalCompleted > 0);
+    
+    // Preparar datos para la tabla
+    const tableData = activeDeveloperSummaries.map(summary => [
+      summary.name.length > 20 ? summary.name.substring(0, 20) + '...' : summary.name,
+      `${Math.round(summary.totalHours)}h`,
+      `${summary.totalCompleted}`,
+      `${summary.totalAssigned}`,
+      `${summary.completionRate.toFixed(1)}%`,
+      `${summary.avgEfficiency.toFixed(1)}%`,
+      `${summary.sprints}`
+    ]);
+    
+    // Crear tabla con autoTable
+    autoTable(doc, {
+      startY: yPosition,
+      head: [[
+        'Desarrollador', 
+        'Horas', 
+        'Completadas', 
+        'Asignadas', 
+        'Tasa Compl.', 
+        'Eficiencia', 
+        'Sprints'
+      ]],
+      body: tableData,
+      styles: {
+        fontSize: 9,
+        cellPadding: 3,
+      },
+      headStyles: {
+        fillColor: [66, 139, 202],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      columnStyles: {
+        0: { cellWidth: 40 }, // Desarrollador
+        1: { cellWidth: 20 }, // Horas
+        2: { cellWidth: 20 }, // Completadas
+        3: { cellWidth: 20 }, // Asignadas
+        4: { cellWidth: 25 }, // Tasa Completación
+        5: { cellWidth: 25 }, // Eficiencia
+        6: { cellWidth: 20 }  // Sprints
+      },
+      margin: { left: 15, right: 15 },
+      didDrawPage: (data) => {
+        // Footer en cada página
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text(
+          `Página ${data.pageNumber}`, 
+          pageWidth / 2, 
+          pageHeight - 10, 
+          { align: 'center' }
+        );
+      }
+    });
+    
+    // Agregar análisis adicional si hay espacio o crear nueva página
+    const finalY = (doc as any).lastAutoTable.finalY || yPosition + 50;
+    
+    if (finalY > pageHeight - 80) {
+      doc.addPage();
+      yPosition = 20;
+    } else {
+      yPosition = finalY + 20;
+    }
+    
+    // Análisis de rendimiento
+    doc.setFontSize(14);
+    doc.setTextColor(40, 40, 40);
+    doc.text('Análisis de Rendimiento', 20, yPosition);
+    
+    yPosition += 10;
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    
+    // Top performers
+    const topPerformers = activeDeveloperSummaries
+      .sort((a, b) => b.totalCompleted - a.totalCompleted)
+      .slice(0, 3);
+    
+    if (topPerformers.length > 0) {
+      doc.setTextColor(40, 167, 69); // Verde
+      doc.text('Top Performers (por tareas completadas):', 25, yPosition);
+      yPosition += 8;
+      
+      topPerformers.forEach((dev, index) => {
+        doc.setTextColor(60, 60, 60);
+        doc.text(`${index + 1}. ${dev.name} - ${dev.totalCompleted} tareas (${dev.completionRate.toFixed(1)}% completación)`, 30, yPosition);
+        yPosition += 6;
+      });
+      yPosition += 5;
+    }
+    
+    // Desarrolladores con baja eficiencia
+    const lowEfficiencyDevs = activeDeveloperSummaries
+      .filter(dev => dev.avgEfficiency < 70 && dev.totalCompleted > 0);
+    
+    if (lowEfficiencyDevs.length > 0) {
+      doc.setTextColor(255, 193, 7); // Amarillo
+      doc.text('Desarrolladores con Oportunidades de Mejora (<70% eficiencia):', 25, yPosition);
+      yPosition += 8;
+      
+      lowEfficiencyDevs.forEach(dev => {
+        doc.setTextColor(60, 60, 60);
+        doc.text(`• ${dev.name} - ${dev.avgEfficiency.toFixed(1)}% eficiencia promedio`, 30, yPosition);
+        yPosition += 6;
+      });
+      yPosition += 5;
+    }
+    
+    // Llamar al análisis IA si es posible
+    try {
+      await this.addAIAnalysis(doc, data, yPosition);
+    } catch (error) {
+      console.log('No se pudo agregar análisis IA:', error);
+    }
+    
+    // Descargar el PDF
+    doc.save(`informe-rendimiento-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+  
+  private async addAIAnalysis(doc: any, data: PerformanceReportData, startY: number): Promise<void> {
+    // Intentar obtener análisis IA
+    try {
+      const aiResponse = await fetch('/api/ai-analysis/performance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken') || 'demo-token'}`,
+        },
+        body: JSON.stringify({
+          performanceData: data.performanceData,
+          sprints: data.sprints,
+          developers: data.developers,
+          metrics: {
+            totalHours: data.totalHoursWorked,
+            totalTasks: data.totalTasksCompleted,
+            totalTasksCompleted: data.totalTasksCompleted,
+            efficiency: data.performanceData.length > 0 
+              ? data.performanceData.reduce((sum, p) => sum + (p.efficiency || 0), 0) / data.performanceData.length 
+              : 0
+          }
+        })
+      });
+      
+      if (aiResponse.ok) {
+        const aiResult = await aiResponse.json();
+        
+        if (aiResult.success && aiResult.insights) {
+          const pageHeight = doc.internal.pageSize.height;
+          let yPosition = startY;
+          
+          // Verificar si necesitamos una nueva página
+          if (yPosition > pageHeight - 100) {
+            doc.addPage();
+            yPosition = 20;
+          }
+          
+          // Título del análisis IA
+          doc.setFontSize(14);
+          doc.setTextColor(40, 40, 40);
+          doc.text('Análisis IA con Gemini', 20, yPosition);
+          
+          yPosition += 10;
+          
+          // Resumen ejecutivo
+          if (aiResult.summary) {
+            doc.setFontSize(11);
+            doc.setTextColor(60, 60, 60);
+            doc.text('Resumen Ejecutivo:', 25, yPosition);
+            yPosition += 8;
+            
+            doc.setFontSize(9);
+            const summaryLines = doc.splitTextToSize(aiResult.summary, 160);
+            summaryLines.forEach((line: string) => {
+              doc.text(line, 30, yPosition);
+              yPosition += 5;
+            });
+            yPosition += 10;
+          }
+          
+          // Insights principales
+          if (aiResult.insights && aiResult.insights.length > 0) {
+            doc.setFontSize(11);
+            doc.setTextColor(60, 60, 60);
+            doc.text('Insights Principales:', 25, yPosition);
+            yPosition += 8;
+            
+            doc.setFontSize(9);
+            aiResult.insights.slice(0, 5).forEach((insight: any) => {
+              // Verificar espacio en la página
+              if (yPosition > pageHeight - 40) {
+                doc.addPage();
+                yPosition = 20;
+              }
+              
+              doc.setTextColor(40, 40, 40);
+              doc.text(`• ${insight.title}`, 30, yPosition);
+              yPosition += 6;
+              
+              doc.setTextColor(80, 80, 80);
+              const descriptionLines = doc.splitTextToSize(insight.description, 150);
+              descriptionLines.forEach((line: string) => {
+                doc.text(line, 35, yPosition);
+                yPosition += 4;
+              });
+              
+              if (insight.recommendation) {
+                doc.setTextColor(25, 135, 84); // Verde
+                doc.text('💡 Recomendación:', 35, yPosition);
+                yPosition += 4;
+                
+                doc.setTextColor(60, 60, 60);
+                const recLines = doc.splitTextToSize(insight.recommendation, 145);
+                recLines.forEach((line: string) => {
+                  doc.text(line, 40, yPosition);
+                  yPosition += 4;
+                });
+              }
+              
+              yPosition += 6;
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error obteniendo análisis IA para PDF:', error);
+    }
+  }
+}

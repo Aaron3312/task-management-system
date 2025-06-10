@@ -2,6 +2,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'demo-key');
+
 
 
 function isAuthenticated(req: NextApiRequest): boolean {
@@ -106,9 +108,9 @@ DATOS DEL PROYECTO (SOLO DESARROLLADORES ACTIVOS):
 - Desarrolladores inactivos (excluidos del análisis): ${inactiveDevelopers.length}
 - Sprints analizados: ${sprints.length}
 - Horas totales trabajadas: ${activeTotalHours.toFixed(1)}h
-- Tareas completadas: ${activeTotalTasks}
-- Tareas asignadas: ${activeTotalAssigned}
-- Tasa de completación: ${activeTotalAssigned > 0 ? ((activeTotalTasks / activeTotalAssigned) * 100).toFixed(1) : 0}%
+- Tareas totales: ${metrics.totalTasks || 0}
+- Tareas completadas: ${metrics.totalTasksCompleted || 0}
+- Tasa de completación: ${metrics.totalTasks > 0 ? ((metrics.totalTasksCompleted / metrics.totalTasks) * 100).toFixed(1) : 0}%
 - Eficiencia promedio normalizada: ${activeAvgEfficiency.toFixed(1)}%
 
 DESARROLLADORES ACTIVOS (Eficiencia Normalizada 0-100%):
