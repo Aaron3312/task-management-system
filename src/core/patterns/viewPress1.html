@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Qué lo Diferencia?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', Arial, sans-serif;
+            background: linear-gradient(135deg, #070000 0%, #1a0000 30%, #2d0000 60%, #0a0000 100%);
+            color: white;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Glowing orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff4444 0%, #cc0000 30%, #660000 60%, transparent 100%);
+            filter: blur(20px);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        .orb1 {
+            width: 300px;
+            height: 300px;
+            top: 300px;
+            right: 400px;
+            animation-delay: 0s;
+        }
+
+        .orb2 {
+            width: 200px;
+            height: 200px;
+            bottom: 200px;
+            left: 200px;
+            animation-delay: 2s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            50% { 
+                transform: scale(1.2);
+                opacity: 0.9;
+            }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 40px 80px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 900;
+            color: #a50000;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo::before {
+            content: '🔥';
+            font-size: 36px;
+        }
+
+        .nav {
+            display: flex;
+            gap: 50px;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-size: 24px;
+            font-weight: 600;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav a:hover {
+            color: #a50000;
+            transform: translateY(-2px);
+        }
+
+        .nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: #a50000;
+            transition: width 0.3s;
+        }
+
+        .nav a:hover::after {
+            width: 100%;
+        }
+
+        .main-title {
+            font-size: 6rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin: 80px 0 120px 80px;
+            letter-spacing: 8px;
+            position: relative;
+            z-index: 5;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+        }
+
+        .main-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: -30px;
+            width: 120px;
+            height: 12px;
+            background: linear-gradient(90deg, #a50000, #ff4444);
+            border-radius: 6px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            padding: 0 80px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            padding: 40px;
+            background: rgba(165, 0, 0, 0.05);
+            border-left: 8px solid #a50000;
+            border-radius: 0 20px 20px 0;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 40px;
+        }
+
+        .feature-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(165, 0, 0, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .feature-item:hover::before {
+            left: 100%;
+        }
+
+        .feature-item:hover {
+            transform: translateX(20px) scale(1.02);
+            background: rgba(165, 0, 0, 0.12);
+            box-shadow: 0 20px 40px rgba(165, 0, 0, 0.3);
+        }
+
+        .feature-number {
+            background: linear-gradient(135deg, #a50000, #cc0000);
+            color: white;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: 900;
+            flex-shrink: 0;
+            clip-path: polygon(0 0, 100% 0, 85% 100%, 0% 100%);
+            box-shadow: 0 10px 20px rgba(165, 0, 0, 0.4);
+        }
+
+        .feature-text {
+            flex: 1;
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1.4;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* Chart/Graph illustration */
+        .chart-container {
+            position: absolute;
+            bottom: 100px;
+            right: 150px;
+            width: 400px;
+            height: 300px;
+            z-index: 6;
+        }
+
+        .chart {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .bar {
+            position: absolute;
+            background: linear-gradient(180deg, #ff4444, #a50000);
+            border-radius: 8px 8px 0 0;
+            animation: growUp 2s ease-out;
+        }
+
+        .bar1 { bottom: 0; left: 50px; width: 40px; height: 120px; animation-delay: 0.2s; }
+        .bar2 { bottom: 0; left: 120px; width: 40px; height: 180px; animation-delay: 0.4s; }
+        .bar3 { bottom: 0; left: 190px; width: 40px; height: 250px; animation-delay: 0.6s; }
+        .bar4 { bottom: 0; left: 260px; width: 40px; height: 200px; animation-delay: 0.8s; }
+
+        @keyframes growUp {
+            from { height: 0; }
+            to { height: inherit; }
+        }
+
+        .trend-arrow {
+            position: absolute;
+            top: 20px;
+            right: 50px;
+            width: 150px;
+            height: 100px;
+            stroke: #a50000;
+            stroke-width: 8;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            animation: drawArrow 3s ease-out 1s both;
+        }
+
+        @keyframes drawArrow {
+            from { stroke-dasharray: 1000; stroke-dashoffset: 1000; }
+            to { stroke-dasharray: 1000; stroke-dashoffset: 0; }
+        }
+
+        .checkmark {
+            position: absolute;
+            bottom: 30px;
+            right: 80px;
+            width: 80px;
+            height: 80px;
+            stroke: #a50000;
+            stroke-width: 6;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            animation: drawCheck 1s ease-out 2s both;
+        }
+
+        @keyframes drawCheck {
+            from { stroke-dasharray: 100; stroke-dashoffset: 100; }
+            to { stroke-dasharray: 100; stroke-dashoffset: 0; }
+        }
+
+        /* Corner accent */
+        .corner-accent {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 150px 150px 0;
+            border-color: transparent #a50000 transparent transparent;
+            z-index: 1;
+        }
+
+        .bottom-number {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            background: linear-gradient(135deg, #a50000, #cc0000);
+            color: white;
+            padding: 20px 35px;
+            font-weight: 900;
+            font-size: 32px;
+            clip-path: polygon(15% 0%, 100% 0%, 100% 70%, 85% 100%, 0% 100%, 0% 30%);
+            box-shadow: 0 10px 20px rgba(165, 0, 0, 0.4);
+            z-index: 10;
+        }
+
+        /* Animation delays for staggered entrance */
+        .feature-item:nth-child(1) { animation: slideInLeft 0.8s ease-out 0.2s both; }
+        .feature-item:nth-child(2) { animation: slideInRight 0.8s ease-out 0.4s both; }
+        .feature-item:nth-child(3) { animation: slideInLeft 0.8s ease-out 0.6s both; }
+        .feature-item:nth-child(4) { animation: slideInRight 0.8s ease-out 0.8s both; }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="corner-accent"></div>
+    
+    <header class="header">
+        <div class="logo">JAI-VIER TMS</div>
+        <nav class="nav">
+            <a href="#home">Home</a>
+            <a href="#service">Service</a>
+            <a href="#about">About Us</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
+
+    <h1 class="main-title">¿Qué lo Diferencia?</h1>
+
+    <div class="content-grid">
+        <div class="feature-item">
+            <div class="feature-number">01</div>
+            <div class="feature-text">Interpretación de lenguaje natural.</div>
+        </div>
+
+        <div class="feature-item">
+            <div class="feature-number">02</div>
+            <div class="feature-text">Disminución de tiempo de creación de tareas, sprints y proyectos</div>
+        </div>
+
+        <div class="feature-item">
+            <div class="feature-number">03</div>
+            <div class="feature-text">Reportes personalizados e instantáneos</div>
+        </div>
+
+        <div class="feature-item">
+            <div class="feature-number">04</div>
+            <div class="feature-text">Facilita el seguimiento de los proyectos</div>
+        </div>
+    </div>
+
+
+    </div>
+
+    <div class="bottom-number">06</div>
+</body>
+</html>

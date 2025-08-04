@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Visualization with D3.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #2d2d2d;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4fc3f7;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+        
+        .graph-container {
+            background: #1e1e1e;
+            border-radius: 10px;
+            border: 2px solid #444;
+            margin-bottom: 20px;
+        }
+        
+        .node {
+            cursor: pointer;
+        }
+        
+        .node circle {
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+        
+        .node text {
+            font-size: 14px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+        }
+        
+        .link {
+            stroke: #4fc3f7;
+            stroke-width: 2px;
+            marker-end: url(#arrowhead);
+        }
+        
+        .link.highlighted {
+            stroke: #ff6b6b;
+            stroke-width: 4px;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .node.highlighted circle {
+            fill: #ff6b6b !important;
+            stroke: #fff;
+            stroke-width: 3px;
+            animation: glow 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 5px #ff6b6b); }
+            50% { filter: drop-shadow(0 0 15px #ff6b6b); }
+        }
+        
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .controls button {
+            background: #4fc3f7;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .controls button:hover {
+            background: #29b6f6;
+        }
+        
+        .info-panel {
+            background: #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .adjacency-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .adj-item {
+            background: #444;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #4fc3f7;
+        }
+        
+        .adj-item.empty {
+            border-left-color: #ff6b6b;
+        }
+        
+        .path-result {
+            background: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .path-result.no-path {
+            background: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Interactive Graph Visualization</h1>
+        
+        <div class="controls">
+            <button onclick="highlightPath('a', 'j')">Show Path: a → j</button>
+            <button onclick="highlightPath('e', 'j')">Show Path: e → j</button>
+            <button onclick="highlightPath('a', 'i')">Show Path: a → i</button>
+            <button onclick="clearHighlights()">Clear Highlights</button>
+            <button onclick="resetLayout()">Reset Layout</button>
+        </div>
+        
+        <div class="graph-container">
+            <svg id="graph" width="100%" height="500"></svg>
+        </div>
+        
+        <div id="pathResult" class="path-result" style="display: none;"></div>
+        
+        <div class="info-panel">
+            <h3>📋 Graph Structure</h3>
+            <div class="adjacency-grid" id="adjacencyList"></div>
+        </div>
+    </div>
+
+    <script>
+        const customDict = {
+            "a": ["c", "d", "b"],
+            "b": ["j"],
+            "c": ["g"],
+            "d": [],
+            "e": ["f", "a"],
+            "f": ["i"],
+            "g": ["d", "h"],
+            "h": [],
+            "i": [],
+            "j": []
+        };
+
+        // Convert to D3 format
+        const nodes = Object.keys(customDict).map(id => ({
+            id,
+            group: customDict[id].length === 0 ? 2 : 1 // Terminal nodes vs regular nodes
+        }));
+
+        const links = [];
+        Object.keys(customDict).forEach(source => {
+            customDict[source].forEach(target => {
+                links.push({ source, target });
+            });
+        });
+
+        const width = 1000;
+        const height = 500;
+
+        const svg = d3.select("#graph")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Define arrow marker
+        svg.append("defs").append("marker")
+            .attr("id", "arrowhead")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 25)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#4fc3f7");
+
+        // Create force simulation
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collision", d3.forceCollide().radius(30));
+
+        // Create links
+        const link = svg.append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(links)
+            .enter().append("line")
+            .attr("class", "link");
+
+        // Create nodes
+        const node = svg.append("g")
+            .attr("class", "nodes")
+            .selectAll("g")
+            .data(nodes)
+            .enter().append("g")
+            .attr("class", "node")
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        node.append("circle")
+            .attr("r", 20)
+            .attr("fill", d => d.group === 1 ? "#4fc3f7" : "#ff6b6b");
+
+        node.append("text")
+            .text(d => d.id)
+            .attr("fill", "white");
+
+        // Add tooltips
+        node.append("title")
+            .text(d => `Node: ${d.id}\nConnections: ${customDict[d.id].join(', ') || 'None'}`);
+
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+        // Drag functions
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        // BFS path finding
+        function findPath(start, end) {
+            if (start === end) return [start];
+            
+            const visited = new Set();
+            const queue = [{node: start, path: [start]}];
+            visited.add(start);
+            
+            while (queue.length > 0) {
+                const {node, path} = queue.shift();
+                
+                for (const neighbor of customDict[node]) {
+                    if (neighbor === end) {
+                        return [...path, neighbor];
+                    }
+                    
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push({node: neighbor, path: [...path, neighbor]});
+                    }
+                }
+            }
+            
+            return null; // No path found
+        }
+
+        // Highlight path
+        function highlightPath(start, end) {
+            clearHighlights();
+            
+            const path = findPath(start, end);
+            const resultDiv = document.getElementById('pathResult');
+            
+            if (path) {
+                resultDiv.textContent = `✅ Path found: ${path.join(' → ')}`;
+                resultDiv.className = 'path-result';
+                resultDiv.style.display = 'block';
+                
+                // Highlight nodes in path
+                node.classed("highlighted", d => path.includes(d.id));
+                
+                // Highlight links in path
+                link.classed("highlighted", d => {
+                    const sourceIndex = path.indexOf(d.source.id);
+                    const targetIndex = path.indexOf(d.target.id);
+                    return sourceIndex !== -1 && targetIndex === sourceIndex + 1;
+                });
+            } else {
+                resultDiv.textContent = `❌ No path exists from ${start} to ${end}`;
+                resultDiv.className = 'path-result no-path';
+                resultDiv.style.display = 'block';
+            }
+        }
+
+        function clearHighlights() {
+            node.classed("highlighted", false);
+            link.classed("highlighted", false);
+            document.getElementById('pathResult').style.display = 'none';
+        }
+
+        function resetLayout() {
+            simulation.alpha(1).restart();
+        }
+
+        // Generate adjacency list display
+        function generateAdjacencyList() {
+            const container = document.getElementById('adjacencyList');
+            
+            Object.keys(customDict).forEach(nodeId => {
+                const div = document.createElement('div');
+                div.className = customDict[nodeId].length === 0 ? 'adj-item empty' : 'adj-item';
+                div.innerHTML = `
+                    <strong>${nodeId}:</strong> [${customDict[nodeId].join(', ') || 'empty'}]
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Initialize
+        generateAdjacencyList();
+        
+        // Auto-demonstrate the example path after a short delay
+        setTimeout(() => {
+            highlightPath('a', 'j');
+        }, 2000);
+    </script>
+</body>
+</html>

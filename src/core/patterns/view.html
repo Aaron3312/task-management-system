@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patrones de Diseño</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #070000 0%, #1a0000 50%, #2d0000 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 60px;
+            padding: 20px 0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #a50000;
+        }
+
+        .nav {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        .nav a:hover {
+            color: #a50000;
+        }
+
+        .title {
+            font-size: 4rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 80px;
+            letter-spacing: 3px;
+            position: relative;
+        }
+
+        .title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: -20px;
+            width: 80px;
+            height: 8px;
+            background: #a50000;
+        }
+
+        .patterns-grid {
+            display: grid;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .pattern-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+            padding: 30px;
+            background: rgba(165, 0, 0, 0.1);
+            border-left: 5px solid #a50000;
+            border-radius: 0 10px 10px 0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pattern-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 0%, rgba(165, 0, 0, 0.05) 50%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .pattern-item:hover {
+            transform: translateX(10px);
+            background: rgba(165, 0, 0, 0.15);
+            box-shadow: 0 10px 30px rgba(165, 0, 0, 0.3);
+        }
+
+        .pattern-number {
+            background: #a50000;
+            color: white;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            flex-shrink: 0;
+            position: relative;
+            clip-path: polygon(0 0, 100% 0, 85% 100%, 0% 100%);
+        }
+
+        .pattern-content {
+            flex: 1;
+        }
+
+        .pattern-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #a50000;
+        }
+
+        .pattern-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            color: #440a00;
+            font-weight: 600;
+        }
+
+        .pattern-location {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+            background: rgba(68, 10, 0, 0.3);
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .pattern-description {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .characteristics {
+            list-style: none;
+        }
+
+        .characteristics li {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .characteristics li::before {
+            content: '▶';
+            position: absolute;
+            left: 0;
+            color: #a50000;
+            font-size: 12px;
+        }
+
+        .accent-corner {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 100px 100px 0;
+            border-color: transparent #a50000 transparent transparent;
+            z-index: 1;
+        }
+
+        .bottom-accent {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #a50000;
+            color: white;
+            padding: 15px 25px;
+            font-weight: bold;
+            font-size: 18px;
+            clip-path: polygon(15% 0%, 100% 0%, 100% 70%, 85% 100%, 0% 100%, 0% 30%);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .pattern-item {
+            animation: slideIn 0.6s ease-out;
+        }
+
+        .pattern-item:nth-child(1) { animation-delay: 0.1s; }
+        .pattern-item:nth-child(2) { animation-delay: 0.3s; }
+        .pattern-item:nth-child(3) { animation-delay: 0.5s; }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2.5rem;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .pattern-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .pattern-number {
+                align-self: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="accent-corner"></div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo">🔥 JAI-VIER TMS</div>
+            <nav class="nav">
+                <a href="#home">Home</a>
+                <a href="#service">Service</a>
+                <a href="#about">About Us</a>
+                <a href="#contact">Contact</a>
+            </nav>
+        </header>
+
+        <h1 class="title">Patrones de Diseño</h1>
+
+        <div class="patterns-grid">
+            <div class="pattern-item">
+                <div class="pattern-number">01</div>
+                <div class="pattern-content">
+                    <h2 class="pattern-title">Factory Pattern (Patrón Fábrica)</h2>
+                    <div class="pattern-location">📁 src/core/patterns/factory.ts</div>
+                    <p class="pattern-subtitle">Propósito:</p>
+                    <p class="pattern-description">Crear diferentes tipos de tareas de manera estandarizada</p>
+                    <p class="pattern-subtitle">Características:</p>
+                    <ul class="characteristics">
+                        <li>Crea tareas simples o complejas según las horas estimadas</li>
+                        <li>Métodos específicos para crear tareas de documentación, bugs y features</li>
+                        <li>Divide automáticamente tareas grandes en subtareas</li>
+                        <li>Encapsula la lógica de creación de objetos</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pattern-item">
+                <div class="pattern-number">02</div>
+                <div class="pattern-content">
+                    <h2 class="pattern-title">Singleton Pattern (Patrón Singleton)</h2>
+                    <div class="pattern-location">📁 src/core/patterns/singleton.ts</div>
+                    <p class="pattern-subtitle">Propósito:</p>
+                    <p class="pattern-description">Gestionar el estado global de la aplicación</p>
+                    <p class="pattern-subtitle">Características:</p>
+                    <ul class="characteristics">
+                        <li>Una sola instancia de AppState en toda la aplicación</li>
+                        <li>Maneja tareas, proyectos, usuarios, sprints y comentarios</li>
+                        <li>Métodos para CRUD de todas las entidades</li>
+                        <li>Garantiza consistencia de datos en memoria</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pattern-item">
+                <div class="pattern-number">03</div>
+                <div class="pattern-content">
+                    <h2 class="pattern-title">Composite Pattern (Patrón Compuesto)</h2>
+                    <div class="pattern-location">📁 src/core/patterns/composite.ts</div>
+                    <p class="pattern-subtitle">Propósito:</p>
+                    <p class="pattern-description">Tratar tareas y subtareas de forma uniforme</p>
+                    <p class="pattern-subtitle">Características:</p>
+                    <ul class="characteristics">
+                        <li>Interfaz común TaskComponent para tareas y subtareas</li>
+                        <li>CompositeTask maneja tareas con subtareas</li>
+                        <li>SimpleTask para tareas individuales</li>
+                        <li>Cálculo automático de progreso basado en subtareas</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-accent">03</div>
+</body>
+</html>
