@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/BackendAuthContext';
+import { useAuth } from '@/contexts/MockAuthContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,52 +22,36 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
-  const { currentUser, backendUser, updateProfile } = useAuth();
+  const { currentUser } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [workMode, setWorkMode] = useState('REMOTE');
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Extract username and initials from email
-  const username = currentUser?.email?.split('@')[0] || '';
-  const initials = username.substring(0, 2).toUpperCase();
+  // Extract username and initials
+  const username = currentUser?.username || currentUser?.email?.split('@')[0] || 'Usuario';
+  const initials = (currentUser?.full_name || username).substring(0, 2).toUpperCase();
 
-  // Load user data when backend user changes
+  // Load user data
   useEffect(() => {
-    if (backendUser) {
-      setFullName(backendUser.full_name || currentUser?.displayName || '');
-      setWorkMode(backendUser.work_mode || 'REMOTE');
-    } else if (currentUser?.displayName) {
-      setFullName(currentUser.displayName);
+    if (currentUser) {
+      setFullName(currentUser.full_name || '');
+      setWorkMode(currentUser.work_mode || 'REMOTO');
     }
-  }, [backendUser, currentUser]);
+  }, [currentUser]);
 
-  // Handle form submission
+  // Handle form submission (solo muestra mensaje de éxito en demo)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    setError(null);
     setSuccessMessage(null);
 
-    try {
-      const success = await updateProfile({
-        fullName,
-        workMode,
-      });
-
-      if (success) {
-        setSuccessMessage('Perfil actualizado correctamente');
-      } else {
-        setError('No se pudo actualizar el perfil');
-      }
-    } catch (err) {
-      console.error('Error updating profile:', err);
-      setError('No se pudo actualizar el perfil');
-    } finally {
+    // Simular guardado
+    setTimeout(() => {
+      setSuccessMessage('Perfil actualizado correctamente (Demo mode - los cambios no se guardan)');
       setIsSaving(false);
-    }
+    }, 1000);
   };
 
   return (
@@ -92,13 +76,6 @@ function ProfileContent() {
 
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
                 {successMessage && (
                   <Alert className="bg-green-50 border-green-200">
                     <AlertDescription className="text-green-800">{successMessage}</AlertDescription>

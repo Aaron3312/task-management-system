@@ -11,8 +11,8 @@ import { Label } from '@/components/ui/label';
 import { ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { IUser, UserRole, WorkMode } from '@/core/interfaces/models';
-import { UserService } from '@/services/api/userService';
-import { useAuth } from '@/contexts/BackendAuthContext';
+import { UserService } from '@/services/api';
+import { useAuth } from '@/contexts/MockAuthContext';
 import Link from 'next/link';
 import {
   Select,
