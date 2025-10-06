@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { useAuth } from '@/contexts/BackendAuthContext';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/contexts/MockAuthContext';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,18 +20,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 
-// Import API services
-import { TaskService, ProjectService, SprintService } from '@/services/api';
+// Import Mock services
+import { MockTaskService, MockProjectService, MockSprintService } from '@/services/mockService';
 
 export default function HomePage() {
-  const { currentUser, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !currentUser) {
-      router.push('/auth/login');
-    }
-  }, [loading, currentUser, router]);
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -42,15 +34,7 @@ export default function HomePage() {
     );
   }
 
-  if (!currentUser) {
-    return null;
-  }
-
-  return (
-    <ProtectedRoute>
-      <DashboardContent />
-    </ProtectedRoute>
-  );
+  return <DashboardContent />;
 }
 
 function DashboardContent() {
@@ -98,7 +82,7 @@ function DashboardContent() {
   const fetchAllData = async () => {
     const fetchTasks = async () => {
       try {
-        const tasks = await TaskService.getTasks();
+        const tasks = await MockTaskService.getTasks();
         const sortedTasks = tasks
           .filter((task) => task.created_at)
           .sort((a, b) => {
@@ -108,7 +92,7 @@ function DashboardContent() {
           })
           .slice(0, 3);
         setRecentTasks(sortedTasks);
-        
+
         setTimeout(() => {
           gsap.fromTo(tasksSectionRef.current,
             { opacity: 0, y: 30, scale: 0.95 },
@@ -124,7 +108,7 @@ function DashboardContent() {
 
     const fetchProjects = async () => {
       try {
-        const projects = await ProjectService.getProjects({ status: ProjectStatus.ACTIVE });
+        const projects = await MockProjectService.getProjects({ status: ProjectStatus.ACTIVE });
         setActiveProjects(projects.slice(0, 3));
       } catch (error) {
         console.error('Error fetching projects:', error);
@@ -135,7 +119,7 @@ function DashboardContent() {
 
     const fetchSprints = async () => {
       try {
-        const sprints = await SprintService.getSprints({ status: 1 });
+        const sprints = await MockSprintService.getSprints({ status: 1 });
         setActiveSprints(sprints.slice(0, 3));
       } catch (error) {
         console.error('Error fetching sprints:', error);
@@ -169,7 +153,7 @@ function DashboardContent() {
     try {
       setLoadingTaskId(taskId);
 
-      const currentTask = await TaskService.getTaskById(taskId);
+      const currentTask = await MockTaskService.getTaskById(taskId);
 
       if (!currentTask) {
         console.error(`Task with ID ${taskId} not found`);
@@ -187,13 +171,13 @@ function DashboardContent() {
         estimated_hours: currentTask.estimated_hours,
       };
 
-      const updatedTask = await TaskService.updateTask(taskId, updatedTaskData);
+      const updatedTask = await MockTaskService.updateTask(taskId, updatedTaskData);
 
       if (updatedTask) {
-        const taskElement = taskCardsRef.current.find(el => 
+        const taskElement = taskCardsRef.current.find(el =>
           el?.dataset.taskId === taskId.toString()
         );
-        
+
         if (taskElement) {
           gsap.to(taskElement, {
             scale: 1.1,
@@ -204,7 +188,7 @@ function DashboardContent() {
           });
         }
 
-        const allTasks = await TaskService.getTasks();
+        const allTasks = await MockTaskService.getTasks();
         const sortedTasks = allTasks
           .filter((task) => task.created_at)
           .sort((a, b) => {

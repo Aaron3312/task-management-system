@@ -12,13 +12,12 @@ import {
 import { UserRole } from '@/core/interfaces/models';
 import { useDarkMode } from '@/hooks/useDarkMode';
 import Link from 'next/link';
-import { 
-  Layers, 
-  Calendar, 
-  CheckSquare, 
-  LogOut, 
-  User, 
-  Menu, 
+import {
+  Layers,
+  Calendar,
+  CheckSquare,
+  User,
+  Menu,
   Plus,
   Moon,
   Sun
@@ -147,14 +146,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                   Perfil
                 </DropdownMenuItem>
               </Link>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={onLogout}
-                className="transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-950/20 group/item"
-              >
-                <LogOut className="h-4 w-4 mr-2 transition-all duration-200 group-hover/item:scale-110 group-hover/item:text-red-600" /> 
-                Cerrar sesión
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

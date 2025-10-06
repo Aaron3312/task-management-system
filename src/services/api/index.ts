@@ -1,11 +1,41 @@
 // src/services/api/index.ts
-// Archivo de exportación principal para los servicios API
-export * from './apiClient';
-export * from './taskService';
-export * from './subtaskService';
-export * from './projectService';
-export * from './userService';
-export * from './projectMemberService';
-export * from './commentService';
-export * from './sprintService';
-export { TaskAssigneeService } from './taskAssigneeService';
+// Archivo de exportación principal - Ahora usando servicios MOCK
+import {
+  MockTaskService,
+  MockProjectService,
+  MockSprintService,
+  MockUserService
+} from '../mockService';
+
+// Exportar servicios mock con los mismos nombres
+export const TaskService = MockTaskService;
+export const ProjectService = MockProjectService;
+export const SprintService = MockSprintService;
+export const UserService = MockUserService;
+
+// Servicios mock stub para compatibilidad
+export const ProjectMemberService = {
+  getProjectMembersByProject: async () => [],
+  addProjectMember: async () => null,
+  removeProjectMember: async () => false,
+};
+
+export const CommentService = {
+  getCommentsByTask: async () => [],
+  createComment: async () => null,
+};
+
+export const SubtaskService = {
+  getSubtasksByTask: async () => [],
+  createSubtask: async () => null,
+};
+
+export const TaskAssigneeService = {
+  getAssigneesByTask: async () => [],
+  assignTask: async () => null,
+};
+
+export const WorkLogService = {
+  getWorkLogsByTask: async () => [],
+  createWorkLog: async () => null,
+};
