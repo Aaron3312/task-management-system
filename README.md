@@ -188,7 +188,7 @@ Actualmente, existen algunos problemas con la implementación del backend. Entre
 - **Diego**: Desarrollador Backend
 - **Fernando Cuevas**: QA
 - **Aaron**: Desarrollador Full Stack
-- **Aram**: Intern
+- **Aram**: Desarrollador Full Stack
 
 ## Ajustes para Producción
 
