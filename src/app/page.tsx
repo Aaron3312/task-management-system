@@ -15,14 +15,16 @@ import {
   CalendarIcon,
   CheckCircle2,
   Calendar,
+  MessageSquare,
+  Clock,
 } from 'lucide-react';
-import { ITask, IProject, ISprint, TaskStatus, ProjectStatus } from '@/core/interfaces/models';
+import { ITask, IProject, ISprint, IComment, TaskStatus, ProjectStatus } from '@/core/interfaces/models';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 
 // Import API services
-import { TaskService, ProjectService, SprintService } from '@/services/api';
+import { TaskService, ProjectService, SprintService, CommentService } from '@/services/api';
 
 export default function HomePage() {
   const { currentUser, loading } = useAuth();
@@ -57,10 +59,12 @@ function DashboardContent() {
   const [recentTasks, setRecentTasks] = useState<ITask[]>([]);
   const [activeProjects, setActiveProjects] = useState<IProject[]>([]);
   const [activeSprints, setActiveSprints] = useState<ISprint[]>([]);
+  const [recentComments, setRecentComments] = useState<IComment[]>([]);
   const [isLoading, setIsLoading] = useState({
     tasks: true,
     projects: true,
     sprints: true,
+    comments: true,
   });
   const [loadingTaskId, setLoadingTaskId] = useState<number | null>(null);
 
@@ -144,7 +148,27 @@ function DashboardContent() {
       }
     };
 
-    await Promise.all([fetchTasks(), fetchProjects(), fetchSprints()]);
+    const fetchComments = async () => {
+      try {
+        const comments = await CommentService.getAllComments();
+        // Sort by created_at descending and take the last 5
+        const sortedComments = comments
+          .filter((comment) => comment.created_at)
+          .sort((a, b) => {
+            const dateA = new Date(a.created_at || '').getTime();
+            const dateB = new Date(b.created_at || '').getTime();
+            return dateB - dateA;
+          })
+          .slice(0, 5);
+        setRecentComments(sortedComments);
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+      } finally {
+        setIsLoading((prev) => ({ ...prev, comments: false }));
+      }
+    };
+
+    await Promise.all([fetchTasks(), fetchProjects(), fetchSprints(), fetchComments()]);
   };
 
   useEffect(() => {
@@ -416,6 +440,73 @@ function DashboardContent() {
                   </Button>
                 </Link>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Activity Section */}
+        <div className="mt-8">
+          <Card className="group relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-purple-500/10">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-50/0 to-pink-50/0 group-hover:from-purple-50/30 group-hover:to-pink-50/30 dark:group-hover:from-purple-950/20 dark:group-hover:to-pink-950/20 transition-all duration-700"></div>
+            
+            <CardHeader className="relative z-10">
+              <CardTitle className="text-lg font-medium flex items-center transition-all duration-300 group-hover:scale-105">
+                <MessageSquare className="h-5 w-5 mr-2 text-purple-500 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12" />
+                <span className="transition-all duration-300 group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                  Actividad Reciente
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="relative z-10">
+              {isLoading.comments ? (
+                <div className="h-32 flex justify-center items-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                </div>
+              ) : recentComments.length > 0 ? (
+                <div className="space-y-4">
+                  {recentComments.map((comment, index) => (
+                    <div
+                      key={comment.id}
+                      className="flex items-start space-x-3 border-b border-border pb-3 last:border-0 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 rounded px-3 py-2 transition-all duration-300 hover:translate-x-2 hover:shadow-md"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <div className="flex-shrink-0 mt-1">
+                        <MessageSquare className="h-4 w-4 text-purple-500 transition-all duration-300 group-hover:scale-110" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground transition-all duration-300 hover:text-purple-600 dark:hover:text-purple-400">
+                          {comment.content}
+                        </p>
+                        <div className="flex items-center mt-1 text-xs text-muted-foreground space-x-2">
+                          <Clock className="h-3 w-3" />
+                          <span>
+                            {comment.created_at
+                              ? new Date(comment.created_at).toLocaleString('es-ES', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                              : 'Sin fecha'}
+                          </span>
+                          <span className="text-muted-foreground">•</span>
+                          <Link
+                            href={`/tasks/${comment.task_id}`}
+                            className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                          >
+                            Ver tarea
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-32 flex justify-center items-center text-muted-foreground">
+                  No hay actividad reciente
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

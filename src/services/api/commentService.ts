@@ -29,6 +29,17 @@ export class CommentService {
     }
   }
 
+  // Obtener todos los comentarios
+  static async getAllComments(): Promise<IComment[]> {
+    try {
+      const comments = await apiClient.get<IComment[]>(this.BASE_PATH);
+      return comments;
+    } catch (error) {
+      console.error('Error fetching all comments:', error);
+      return [];
+    }
+  }
+
   // Crear un nuevo comentario
   static async createComment(
     commentData: Omit<IComment, 'id' | 'created_at' | 'updated_at'>

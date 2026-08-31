@@ -1,9 +1,6 @@
 import './globals.css';
-import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/contexts/BackendAuthContext';
 import { Toaster } from '@/components/ui/toaster';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({
   children,
@@ -28,7 +25,7 @@ export default function RootLayout({
         
         <link rel="icon" href="/favicon.png" />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans antialiased">
         <AuthProvider>
           {children}
           <Toaster />

@@ -529,6 +529,16 @@ export class MockCommentService {
     });
   }
 
+  // Obtener todos los comentarios
+  static async getAllComments(): Promise<IComment[]> {
+    const appState = AppState.getInstance();
+    const comments = appState.getComments();
+
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(comments), 300);
+    });
+  }
+
   // Crear un nuevo comentario
   static async createComment(
     commentData: Omit<IComment, 'id' | 'created_at' | 'updated_at'>
